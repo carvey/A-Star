@@ -50,14 +50,9 @@ class Node:
         :param int pos: Position
         """
         self.val = val # actual value
-        self.pos = pos # puzzle location -> where is this value on the board?
+        # self.pos = pos # puzzle location -> where is this value on the board?
 
         self.start_pos = pos
-
-        self.g = None
-        self.h = None
-        self.f = None
-        self.parent = None
 
     def __str__(self):
         return "Node: %s" % self.val
@@ -232,6 +227,14 @@ class Puzzle:
 
         return start_map, goal_map
 
+    def expand(self):
+        """
+        Take in a state, expand the puzzle state from the empty node, create a new puzzle state, and add the new
+        state to the graph
+        :return:
+        """
+        pass
+
     def solve(self):
         """
         You know, do solving things that don't actually work.
@@ -241,13 +244,19 @@ class Puzzle:
         start_state = self.start_state
         self.graph.add_node(start_state)
 
-        # find neighbors (expand current state, finding all possible node moves) and calculate f costs
-        start_node = start_state.get_start_node()
-        for pos, neighbor in start_state.neighbors(start_node).items():
-            copied_state = start_state.move_node(neighbor, start_node)
-            puzzle_state = PuzzleState(copied_state)
+        if start_state.validate_goal_state():
+            # solution found - do something here
+            return
 
-            self.graph.add_edge(start_node, puzzle_state)
+        # find neighbors (expand current state, finding all possible node moves) and calculate f costs
+        empty_node = start_state.get_empty_node()
+        for pos, neighbor in start_state.neighbors(empty_node).items():
+            copied_state = start_state
+            copied_state.move_node(neighbor, empty_node)
+
+            puzzle_state = PuzzleState(copied_state.state)
+
+            self.graph.add_edge(start_state, puzzle_state)
 
 
         # open = set()
@@ -297,7 +306,7 @@ class PuzzleState:
         return self.print_state()
 
     def __repr__(self):
-        return self.__str__()
+        return self.print_state()
 
     def validate_goal_state(self):
         """
@@ -311,7 +320,7 @@ class PuzzleState:
 
         return True
 
-    def get_start_node(self):
+    def get_empty_node(self):
         """
         Get the starting node
 
@@ -340,9 +349,9 @@ class PuzzleState:
         self.state[empty_pos] = moving_node
         self.state[moving_pos] = empty_node
 
-        # switch the position on the nodes themselves
-        self.state[empty_pos].pos = moving_pos
-        self.state[moving_pos].pos = empty_pos
+        # # switch the position on the nodes themselves
+        # self.state[empty_pos].pos = moving_pos
+        # self.state[moving_pos].pos = empty_pos
 
     def print_state(self):
         """
@@ -351,14 +360,16 @@ class PuzzleState:
         :return:
         """
         cnt = 1
-
+        puzzle_state = ""
         for pos, node in self.state.items():
             if cnt % 3 == 0:
-                print(node.display_value)
+                puzzle_state += "%s\n" % str(node.display_value)
             else:
-                print(node.display_value, end=" ")
+                puzzle_state += "%s " % node.display_value
 
             cnt +=1
+
+        return puzzle_state
 
     def neighbors(self, node):
         """
@@ -374,8 +385,9 @@ class PuzzleState:
 
 
 p1 = Puzzle('sample-problems/p1', True)
-p1.start_state.print_state()
+state = p1.start_state.print_state()
+print(state)
 p1.solve()
 
-nx.draw(p1.graph)
-plt.show()
+# nx.draw_circular(p1.graph, with_labels=True, node_size=3500, node_color='white')
+# plt.show()
