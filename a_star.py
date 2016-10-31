@@ -68,56 +68,6 @@ class Node:
         else:
             return self.val
 
-    def calc(self, g=True, h=False):
-        """
-        Heuristic will be the manhatten distance
-
-        Can calculate the both the g and h costs with the associated flags
-        :param bool g:
-        :param bool h:
-        :return:
-        :rtype: int
-        """
-        start = None
-        end = None
-
-        if g:
-            start = self.start_pos
-            end = self.val
-
-        if h:
-            start = self.val
-            end = self.pos
-
-        start_coords = coord_map[self.val]
-        start_x = start_coords[0]
-        start_y = start_coords[1]
-
-        goal_coords = coord_map[self.pos]
-        goal_x = goal_coords[0]
-        goal_y = goal_coords[1]
-
-        dst = abs(start_x - goal_x) + abs(start_y - goal_y)
-
-        return dst
-
-    def calc_f(self):
-        """
-        Returns the sum of the g and h values for this node
-        :return:
-        :rtype: int
-        """
-        return self.calc(g=True) + self.calc(h=True)
-
-    def validate_goal_state(self):
-        """
-        Will make sure that value of the node aligns with its position
-
-        In this case, the optimal puzzle value will have the empty space at pos 0
-        :return: True if in the goal state, otherwise False.
-        :rtype: bool
-        """
-        return self.val == self.pos
 
     def valid_movement_positions(self, position):
         """
@@ -371,6 +321,22 @@ class PuzzleState:
 
         return puzzle_state
 
+
+
+
+
+    def node_position(self, node):
+        """
+        Returns the given nodes position in the current state
+        :param node: the node to search for
+        :return: the position of the given node in the state
+        :rtype: int
+        """
+        for pos, _node in self.state.items():
+            if _node == node:
+                return True
+
+
     def neighbors(self, node):
         """
         Return the nodes that can be switched with a given node
@@ -382,6 +348,62 @@ class PuzzleState:
         neighbor_nodes = {pos:_node for pos,_node in self.state.items() if pos in valid_movement_positions}
 
         return neighbor_nodes
+
+    #TODO Need to verify this is working properly after the logic update
+    def calc(self, node, g=True, h=False):
+        """
+        Heuristic will be the manhatten distance
+
+        Can calculate the both the g and h costs with the associated flags
+        :param bool g:
+        :param bool h:
+        :return:
+        :rtype: int
+        """
+
+        start_node_pos = self.node_position(node)
+
+        start = None
+        end = None
+
+        if g:
+            start = node.start_pos
+            end = node.val
+
+        if h:
+            start = node.val
+            end = start_node_pos
+
+        start_coords = coord_map[node.val]
+        start_x = start_coords[0]
+        start_y = start_coords[1]
+
+        goal_coords = coord_map[node.pos]
+        goal_x = goal_coords[0]
+        goal_y = goal_coords[1]
+
+        dst = abs(start_x - goal_x) + abs(start_y - goal_y)
+
+        return dst
+
+    def calc_f(self, node):
+        """
+        Returns the sum of the g and h values for this node
+        :return:
+        :rtype: int
+        """
+        return self.calc(node, g=True) + self.calc(node, h=True)
+
+    def validate_node_goal_position(self, node):
+        """
+        Will make sure that value of the node aligns with its position
+
+        In this case, the optimal puzzle value will have the empty space at pos 0
+        :return: True if in the goal state, otherwise False.
+        :rtype: bool
+        """
+        pos = self.node_position(node)
+        return node.val == pos
 
 
 p1 = Puzzle('sample-problems/p1', True)
