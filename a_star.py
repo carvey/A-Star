@@ -177,13 +177,34 @@ class Puzzle:
 
         return start_map, goal_map
 
-    def expand(self):
+    def expand(self, state):
         """
         Take in a state, expand the puzzle state from the empty node, create a new puzzle state, and add the new
         state to the graph
+        :param state: a PuzzleState instance to be expanded
         :return:
         """
-        pass
+        empty_node = state.get_empty_node()
+        f_costs = {}
+
+        for pos, child in state.children(empty_node).items():
+            copied_state = state
+            copied_state.move_node(child, empty_node)
+
+            new_state = PuzzleState(copied_state.state)
+            print(new_state.print_state())
+            self.graph.add_node(new_state)
+            self.graph.add_edge(state, new_state)
+
+            if new_state.validate_goal_state():
+                print("Done:\n %s" % new_state.print_state())
+                return
+
+            empty_node = new_state.get_empty_node()
+            f_costs[new_state] = new_state.calc_f(empty_node)
+
+
+        self.expand(min(f_costs))
 
     def solve(self):
         """
@@ -198,15 +219,18 @@ class Puzzle:
             # solution found - do something here
             return
 
+        # path = []
+        self.expand(start_state)
+
         # find neighbors (expand current state, finding all possible node moves) and calculate f costs
-        empty_node = start_state.get_empty_node()
-        for pos, neighbor in start_state.neighbors(empty_node).items():
-            copied_state = start_state
-            copied_state.move_node(neighbor, empty_node)
-
-            puzzle_state = PuzzleState(copied_state.state)
-
-            self.graph.add_edge(start_state, puzzle_state)
+        # empty_node = start_state.get_empty_node()
+        # for pos, neighbor in start_state.neighbors(empty_node).items():
+        #     copied_state = start_state
+        #     copied_state.move_node(neighbor, empty_node)
+        #
+        #     puzzle_state = PuzzleState(copied_state.state)
+        #
+        #     self.graph.add_edge(start_state, puzzle_state)
 
 
         # open = set()
@@ -265,7 +289,7 @@ class PuzzleState:
         :rtype: bool
         """
         for pos, node in self.state.items():
-            if not node.validate_goal_state():
+            if not self.validate_node_goal_position(node):
                 return False
 
         return True
@@ -292,16 +316,12 @@ class PuzzleState:
             raise Exception("Can't move to a position that does not contain the 0 value")
 
         # create dummy vars to hold the positions of each node while we switch
-        moving_pos = moving_node.pos
-        empty_pos = empty_node.pos
+        moving_pos = self.node_position(moving_node)
+        empty_pos = self.node_position(empty_node)
 
         # switch the nodes in Puzzles position, val map
         self.state[empty_pos] = moving_node
         self.state[moving_pos] = empty_node
-
-        # # switch the position on the nodes themselves
-        # self.state[empty_pos].pos = moving_pos
-        # self.state[moving_pos].pos = empty_pos
 
     def print_state(self):
         """
@@ -322,9 +342,6 @@ class PuzzleState:
         return puzzle_state
 
 
-
-
-
     def node_position(self, node):
         """
         Returns the given nodes position in the current state
@@ -334,20 +351,21 @@ class PuzzleState:
         """
         for pos, _node in self.state.items():
             if _node == node:
-                return True
+                return pos
 
 
-    def neighbors(self, node):
+    def children(self, node):
         """
         Return the nodes that can be switched with a given node
         :param node: The node to find the valid switches for
         :return: dict of the format {node_position: node, node_position: node}
         :rtype: dict
         """
-        valid_movement_positions = node.valid_movement_positions(node.pos)
-        neighbor_nodes = {pos:_node for pos,_node in self.state.items() if pos in valid_movement_positions}
+        node_pos = self.node_position(node)
+        valid_movement_positions = node.valid_movement_positions(node_pos)
+        children_nodes = {pos:_node for pos,_node in self.state.items() if pos in valid_movement_positions}
 
-        return neighbor_nodes
+        return children_nodes
 
     #TODO Need to verify this is working properly after the logic update
     def calc(self, node, g=True, h=False):
@@ -378,7 +396,7 @@ class PuzzleState:
         start_x = start_coords[0]
         start_y = start_coords[1]
 
-        goal_coords = coord_map[node.pos]
+        goal_coords = coord_map[start_node_pos]
         goal_x = goal_coords[0]
         goal_y = goal_coords[1]
 
