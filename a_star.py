@@ -7,10 +7,10 @@ Michael Palmer
 import copy
 import random
 
-import matplotlib
-import networkx as nx
+# import matplotlib
+# import networkx as nx
 
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 
 coord_map = {
     0: (0, 0),
@@ -112,14 +112,14 @@ class Puzzle:
         self.start_state = PuzzleState(start_state)
         self.goal_state = PuzzleState(goal_state)
 
-        self.graph = nx.DiGraph()
+        # self.graph = nx.DiGraph()
 
-    def show_graph(self):
-        """
-        Show the graph
-        """
-        pos = nx.shell_layout(self.graph)
-        nx.draw(self.graph, pos, node_size=1500, node_color='yellow', edge_color='red', with_labels=True)
+    # def show_graph(self):
+    #     """
+    #     Show the graph
+    #     """
+    #     pos = nx.shell_layout(self.graph)
+    #     nx.draw(self.graph, pos, node_size=1500, node_color='yellow', edge_color='red', with_labels=True)
 
     def parse_file(self, file):
         """
@@ -207,8 +207,8 @@ class Puzzle:
             new_state = PuzzleState(copied_state.state)
 
             # Add node and edge to the graph
-            self.graph.add_node(new_state)
-            self.graph.add_edge(state, new_state)
+            # self.graph.add_node(new_state)
+            # self.graph.add_edge(state, new_state)
 
             # Check if we have reached the goal state
             if new_state.validate_goal_state():
@@ -218,19 +218,95 @@ class Puzzle:
             empty_node = new_state.get_empty_node()
 
             # Calculate the aggregate f costs
-            f_costs[new_state] = new_state.aggregate_f_costs()
+            f_costs[new_state] = new_state.aggregate_f_costs
 
         # Find the minimum f cost
         min_value = f_costs[min(f_costs, key=f_costs.get)]
 
-        # Find all the nodes with that minimum f cost
-        min_nodes = [_state for _state, f in f_costs.items() if f == min_value]
+        # Find all the states with that minimum f cost
+        min_states = [_state for _state, f in f_costs.items() if f == min_value]
 
-        # Pick a random node
-        next_node = random.choice(min_nodes)
+        # Pick a random state
+        next_state = random.choice(min_states)
 
-        # Expand the next node
-        self.expand(next_node)
+        next_state.parent = state
+
+        # Expand the next state
+        self.expand(next_state)
+
+    @staticmethod
+    def random_min(iterable, key=lambda x: x):
+        """
+        Pick a random min using the key
+
+        :param set iterable: Set of items
+        :param key: Lambda expression to use to find the value of each item
+        :return: Minimum value
+        :rtype: PuzzleState
+        """
+        # Convert set to list
+        items = list(iterable)
+
+        # Shuffle it
+        random.shuffle(items)
+
+        # Find the min
+        return min(items, key=key)
+
+    @staticmethod
+    def state_in(item, sequence):
+        """
+        Check if this state is in a sequence
+
+        :param item:
+        :param set sequence:
+        :return: Boolean
+        :rtype: bool
+        """
+        for x in sequence:
+            if x.__repr__() == item.__repr__():
+                return True
+        return False
+
+    def solve2(self):
+        """
+        Solve it!
+        :return: Solution
+        :rtype: PuzzleState
+        """
+        start_state = self.start_state
+        goal_state = self.goal_state
+        open = set()
+        closed = set()
+        open.add(start_state)
+
+        # moves = 0
+
+        while len(open) > 0:
+            current = self.random_min(open, key=lambda item: item.aggregate_f_costs)
+            # print('Moves: %d' % moves)
+            # print(current.print_state())
+
+            open.remove(current)
+            closed.add(current)
+
+            if current.__repr__() == goal_state.__repr__():
+                return current
+
+            cost = current.aggregate_f_costs
+
+            for child in current.actions():
+                if self.state_in(child, closed):
+                    continue
+
+                if child.aggregate_f_costs < cost or not self.state_in(child, open):
+                    # current.f = current.aggregate_f_costs
+                    child.parent = current
+
+                    if not self.state_in(child, open):
+                        open.add(child)
+
+            # moves += 1
 
     def solve(self):
         """
@@ -238,7 +314,7 @@ class Puzzle:
         :return:
         """
         start_state = self.start_state  # a puzzle state instance
-        self.graph.add_node(start_state)  # add the initial puzzle state to the graph
+        # self.graph.add_node(start_state)  # add the initial puzzle state to the graph
 
         if start_state.validate_goal_state():
             # solution found - do something here
@@ -250,9 +326,14 @@ class Puzzle:
 
 class PuzzleState:
 
-    def __init__(self, state):
+    # g = 0
+    # h = float('inf')
+    # f = float('inf')
+
+    def __init__(self, state, parent=None):
 
         self.state = state
+        self.parent = parent
 
     def __str__(self):
         return self.print_state()
@@ -323,7 +404,7 @@ class PuzzleState:
         """
         Returns the given nodes position in the current state
 
-        :param node: the node to search for
+        :param Node node: the node to search for
         :return: the position of the given node in the state
         :rtype: int
         """
@@ -334,7 +415,7 @@ class PuzzleState:
     def children(self, node):
         """
         Return the nodes that can be switched with a given node
-        :param node: The node to find the valid switches for
+        :param Node node: The node to find the valid switches for
         :return: dict of the format {node_position: node, node_position: node}
         :rtype: dict
         """
@@ -344,7 +425,34 @@ class PuzzleState:
 
         return children_nodes
 
-    def calc(self, node, g=True, h=False):
+    def actions(self):
+        """
+        Generate the possible actions (PuzzleStates) that can be achieved from the current state
+
+        :return: List of actions
+        :rtype: list of PuzzleState
+        """
+        node = self.get_empty_node()
+        node_pos = self.node_position(node)
+        valid_movement_positions = node.valid_movement_positions(node_pos)
+        actions = []
+        for pos, child in self.state.items():
+            if pos in valid_movement_positions:
+                # Make a deep copy
+                copied_state = copy.deepcopy(self)
+
+                # Move the node in the new copy
+                copied_state.move_node(child, node)
+
+                # Create a new puzzle state with the move reflected
+                new_state = PuzzleState(copied_state.state)
+
+                # Add to actions
+                actions.append(new_state)
+
+        return actions
+
+    def calc(self, node, g=False, h=False):
         """
         Heuristic will be the manhatten distance
 
@@ -360,6 +468,9 @@ class PuzzleState:
 
         start = None
         end = None
+
+        if (g and h) or (not g and not h):
+            raise Exception('A single heuristic must be specified')
 
         if g:
             start = current_node_position
@@ -378,6 +489,11 @@ class PuzzleState:
         goal_y = goal_coords[1]
 
         dst = abs(start_x - goal_x) + abs(start_y - goal_y)
+
+        # if g:
+        #     node.g = dst
+        # elif h:
+        #     node.h = dst
 
         return dst
 
@@ -403,6 +519,9 @@ class PuzzleState:
         pos = self.node_position(node)
         return node.val == pos
 
+    # TODO: Probably doesn't make it any faster as a property, but this really needs to be a static value because
+    # I bet this running multiple times in the loop is adding a lot of runtime.
+    @property
     def aggregate_f_costs(self):
         """
         Get the cumulative f cost for an entire puzzle state. This is to give us an estimate on whether the move
@@ -419,10 +538,36 @@ class PuzzleState:
         return f_cost
 
 
-p1 = Puzzle('sample-problems/p1', True)
-state = p1.start_state.print_state()
-print(state)
-p1.solve()
+p1 = Puzzle('sample-problems/test3_0', True)
+# print(p1.start_state.print_state())
+solution = p1.solve2()
+# print(solution.print_state())
+states = []
+current = solution
+
+print('Solution found, tracing back path to start node...')
+
+moves = 0
+
+
+def print_path(state):
+    global moves
+    if state is None:
+        moves = 0
+        return
+    print_path(state.parent)
+    print('Move #%d' % moves)
+    print(state.print_state())
+    moves += 1
+
+
+print_path(solution)
+
+# states.reverse()
+# for i, state in enumerate(states):
+#     print('Moves: %d' % i)
+#     print(state.print_state())
+
 
 # nx.draw_circular(p1.graph, with_labels=True, node_size=3500, node_color='white')
 # plt.show()
