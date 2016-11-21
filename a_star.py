@@ -7,11 +7,6 @@ Michael Palmer
 import copy
 import random
 
-# import matplotlib
-# import networkx as nx
-
-# matplotlib.use('TkAgg')
-
 coord_map = {
     0: (0, 0),
     1: (1, 0),
@@ -35,7 +30,7 @@ class Node:
         self.val = val  # actual value
         # self.pos = pos # puzzle location -> where is this value on the board?
 
-        self.start_pos = pos
+        # self.start_pos = pos
 
     def __str__(self):
         return "Node: %s" % self.val
@@ -112,15 +107,6 @@ class Puzzle:
         self.start_state = PuzzleState(start_state)
         self.goal_state = PuzzleState(goal_state)
 
-        # self.graph = nx.DiGraph()
-
-    # def show_graph(self):
-    #     """
-    #     Show the graph
-    #     """
-    #     pos = nx.shell_layout(self.graph)
-    #     nx.draw(self.graph, pos, node_size=1500, node_color='yellow', edge_color='red', with_labels=True)
-
     def parse_file(self, file):
         """
         Parse the file of the format:
@@ -160,8 +146,8 @@ class Puzzle:
 
         data = data.replace(" ", "").replace("\n", "")
         for val in data:
-            node = Node(int(val), pos)
-            state_map[pos] = node
+            # node = Node(int(val), pos)
+            state_map[pos] = int(val)
             pos += 1
 
         return state_map
@@ -205,10 +191,6 @@ class Puzzle:
 
             # Create a new puzzle state with the move reflected
             new_state = PuzzleState(copied_state.state)
-
-            # Add node and edge to the graph
-            # self.graph.add_node(new_state)
-            # self.graph.add_edge(state, new_state)
 
             # Check if we have reached the goal state
             if new_state.validate_goal_state():
@@ -314,7 +296,6 @@ class Puzzle:
         :return:
         """
         start_state = self.start_state  # a puzzle state instance
-        # self.graph.add_node(start_state)  # add the initial puzzle state to the graph
 
         if start_state.validate_goal_state():
             # solution found - do something here
@@ -331,6 +312,11 @@ class PuzzleState:
     # f = float('inf')
 
     def __init__(self, state, parent=None):
+        """
+
+        :param dict state:
+        :param parent:
+        """
 
         self.state = state
         self.parent = parent
@@ -340,6 +326,41 @@ class PuzzleState:
 
     def __repr__(self):
         return self.print_state()
+
+    def valid_movement_positions(self, position):
+        """
+        'A little janky'
+
+        :param int position: Janky position
+        :return: Janky Value
+        :rtype: tuple
+        """
+        if position == 0:
+            return 1, 3
+
+        elif position == 1:
+            return 0, 2, 4
+
+        elif position == 2:
+            return 1, 5
+
+        elif position == 3:
+            return 0, 4, 6
+
+        elif position == 4:
+            return 1, 3, 5, 7
+
+        elif position == 5:
+            return 2, 4, 8
+
+        elif position == 6:
+            return 3, 7
+
+        elif position == 7:
+            return 6, 4, 8
+
+        elif position == 8:
+            return 5, 7
 
     def validate_goal_state(self):
         """
@@ -360,7 +381,7 @@ class PuzzleState:
         :rtype: Node
         """
         for pos, node in self.state.items():
-            if node.val == 0:
+            if node == 0:
                 return node
 
     def move_node(self, moving_node, empty_node):
@@ -370,7 +391,7 @@ class PuzzleState:
         :param Node empty_node:
         :rtype: None
         """
-        if empty_node.val != 0:
+        if empty_node != 0:
             raise Exception("Can't move to a position that does not contain the 0 value")
 
         # create dummy vars to hold the positions of each node while we switch
@@ -391,10 +412,12 @@ class PuzzleState:
         cnt = 1
         puzzle_state = ""
         for pos, node in self.state.items():
+            if node == 0:
+                node = " "
             if cnt % 3 == 0:
-                puzzle_state += "%s\n" % str(node.display_value)
+                puzzle_state += "%s\n" % str(node)
             else:
-                puzzle_state += "%s " % node.display_value
+                puzzle_state += "%s " % str(node)
 
             cnt += 1
 
@@ -409,7 +432,7 @@ class PuzzleState:
         :rtype: int
         """
         for pos, _node in self.state.items():
-            if _node.val == node.val:
+            if _node == node:
                 return pos
 
     def children(self, node):
@@ -420,7 +443,7 @@ class PuzzleState:
         :rtype: dict
         """
         node_pos = self.node_position(node)
-        valid_movement_positions = node.valid_movement_positions(node_pos)
+        valid_movement_positions = self.valid_movement_positions(node_pos)
         children_nodes = {pos: _node for pos, _node in self.state.items() if pos in valid_movement_positions}
 
         return children_nodes
@@ -434,18 +457,16 @@ class PuzzleState:
         """
         node = self.get_empty_node()
         node_pos = self.node_position(node)
-        valid_movement_positions = node.valid_movement_positions(node_pos)
+        valid_movement_positions = self.valid_movement_positions(node_pos)
         actions = []
         for pos, child in self.state.items():
             if pos in valid_movement_positions:
-                # Make a deep copy
-                copied_state = copy.deepcopy(self)
+                # Make a copy
+                copied_state = copy.copy(self.state)
+                new_state = PuzzleState(copied_state)
 
                 # Move the node in the new copy
-                copied_state.move_node(child, node)
-
-                # Create a new puzzle state with the move reflected
-                new_state = PuzzleState(copied_state.state)
+                new_state.move_node(child, node)
 
                 # Add to actions
                 actions.append(new_state)
@@ -474,11 +495,11 @@ class PuzzleState:
 
         if g:
             start = current_node_position
-            end = node.val
+            end = node
 
         elif h:
             start = current_node_position
-            end = node.val
+            end = node
 
         start_coords = coord_map[start]
         start_x = start_coords[0]
@@ -517,7 +538,7 @@ class PuzzleState:
         :rtype: bool
         """
         pos = self.node_position(node)
-        return node.val == pos
+        return node == pos
 
     # TODO: Probably doesn't make it any faster as a property, but this really needs to be a static value because
     # I bet this running multiple times in the loop is adding a lot of runtime.
@@ -538,12 +559,8 @@ class PuzzleState:
         return f_cost
 
 
-p1 = Puzzle('sample-problems/test3_0', True)
-# print(p1.start_state.print_state())
+p1 = Puzzle('sample-problems/p1', True)
 solution = p1.solve2()
-# print(solution.print_state())
-states = []
-current = solution
 
 print('Solution found, tracing back path to start node...')
 
@@ -567,7 +584,3 @@ print_path(solution)
 # for i, state in enumerate(states):
 #     print('Moves: %d' % i)
 #     print(state.print_state())
-
-
-# nx.draw_circular(p1.graph, with_labels=True, node_size=3500, node_color='white')
-# plt.show()
