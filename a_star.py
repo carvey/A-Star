@@ -29,68 +29,6 @@ parser.add_argument("--file", type=str, required=True, help="puzzle file to pars
 options = parser.parse_args()
 
 
-class Node:
-
-    def __init__(self, val, pos):
-        """
-        :param int val: Node number
-        :param int pos: Position
-        """
-        self.val = val  # actual value
-        # self.pos = pos # puzzle location -> where is this value on the board?
-
-        # self.start_pos = pos
-
-    def __str__(self):
-        return "Node: %s" % self.val
-
-    def __repr__(self):
-        return self.__str__()
-
-    @property
-    def display_value(self):
-        if self.val == 0:
-            return " "
-
-        else:
-            return self.val
-
-    def valid_movement_positions(self, position):
-        """
-        'A little janky'
-
-        :param int position: Janky position
-        :return: Janky Value
-        :rtype: tuple
-        """
-        if position == 0:
-            return 1, 3
-
-        elif position == 1:
-            return 0, 2, 4
-
-        elif position == 2:
-            return 1, 5
-
-        elif position == 3:
-            return 0, 4, 6
-
-        elif position == 4:
-            return 1, 3, 5, 7
-
-        elif position == 5:
-            return 2, 4, 8
-
-        elif position == 6:
-            return 3, 7
-
-        elif position == 7:
-            return 6, 4, 8
-
-        elif position == 8:
-            return 5, 7
-
-
 class Puzzle:
     """
     To represent one puzzle instance based on a sample file
@@ -178,53 +116,6 @@ class Puzzle:
 
         return start_map, goal_map
 
-    def expand(self, state):
-        """
-        Take in a state, expand the puzzle state from the empty node, create a new puzzle state, and add the new
-        state to the graph
-        :param PuzzleState state: a PuzzleState instance to be expanded
-        :return:
-        """
-        empty_node = state.get_empty_node()
-        f_costs = {}
-
-        # Print the current state
-        print(state.print_state())
-
-        for pos, child in state.children(empty_node).items():
-            # Make a deep copy of the current state
-            copied_state = copy.deepcopy(state)
-
-            # Move the node in the new copy
-            copied_state.move_node(child, empty_node)
-
-            # Create a new puzzle state with the move reflected
-            new_state = PuzzleState(copied_state.state)
-
-            # Check if we have reached the goal state
-            if new_state.validate_goal_state():
-                print("Done:\n %s" % new_state.print_state())
-                return
-
-            empty_node = new_state.get_empty_node()
-
-            # Calculate the aggregate f costs
-            f_costs[new_state] = new_state.aggregate_f_costs
-
-        # Find the minimum f cost
-        min_value = f_costs[min(f_costs, key=f_costs.get)]
-
-        # Find all the states with that minimum f cost
-        min_states = [_state for _state, f in f_costs.items() if f == min_value]
-
-        # Pick a random state
-        next_state = random.choice(min_states)
-
-        next_state.parent = state
-
-        # Expand the next state
-        self.expand(next_state)
-
     @staticmethod
     def random_min(iterable, key=lambda x: x):
         """
@@ -267,19 +158,19 @@ class Puzzle:
         """
         start_state = self.start_state
         goal_state = self.goal_state
-        open = set()
-        closed = set()
-        open.add(start_state)
+        open_states = set()
+        closed_states = set()
+        open_states.add(start_state)
 
         # moves = 0
 
-        while len(open) > 0:
-            current = self.random_min(open, key=lambda item: item.aggregate_f_costs)
+        while len(open_states) > 0:
+            current = self.random_min(open_states, key=lambda item: item.aggregate_f_costs)
             # print('Moves: %d' % moves)
             # print(current.print_state())
 
-            open.remove(current)
-            closed.add(current)
+            open_states.remove(current)
+            closed_states.add(current)
 
             if current.state == goal_state.state:
                 return current
@@ -287,31 +178,17 @@ class Puzzle:
             cost = current.aggregate_f_costs
 
             for child in current.actions():
-                if self.state_in(child, closed):
+                if self.state_in(child, closed_states):
                     continue
 
-                if child.aggregate_f_costs < cost or not self.state_in(child, open):
+                if child.aggregate_f_costs < cost or not self.state_in(child, open_states):
                     # current.f = current.aggregate_f_costs
                     child.parent = current
 
-                    if not self.state_in(child, open):
-                        open.add(child)
+                    if not self.state_in(child, open_states):
+                        open_states.add(child)
 
             # moves += 1
-
-    def solve(self):
-        """
-        You know, do janky solving things that don't actually work.
-        :return:
-        """
-        start_state = self.start_state  # a puzzle state instance
-
-        if start_state.validate_goal_state():
-            # solution found - do something here
-            return
-
-        # path = []
-        self.expand(start_state)
 
     @staticmethod
     def print_path(state):
@@ -360,7 +237,8 @@ class PuzzleState:
     def __repr__(self):
         return self.print_state()
 
-    def valid_movement_positions(self, position):
+    @staticmethod
+    def valid_movement_positions(position):
         """
         'A little janky'
 
@@ -472,19 +350,6 @@ class PuzzleState:
             if _node == node:
                 return pos
 
-    def children(self, node):
-        """
-        Return the nodes that can be switched with a given node
-        :param Node node: The node to find the valid switches for
-        :return: dict of the format {node_position: node, node_position: node}
-        :rtype: dict
-        """
-        node_pos = self.node_position(node)
-        valid_movement_positions = self.valid_movement_positions(node_pos)
-        children_nodes = {pos: _node for pos, _node in self.state.items() if pos in valid_movement_positions}
-
-        return children_nodes
-
     def actions(self):
         """
         Generate the possible actions (PuzzleStates) that can be achieved from the current state
@@ -494,7 +359,7 @@ class PuzzleState:
         """
         node = self.get_empty_node()
         node_pos = self.node_position(node)
-        valid_movement_positions = self.valid_movement_positions(node_pos)
+        valid_movement_positions = PuzzleState.valid_movement_positions(node_pos)
         actions = []
         for pos, child in self.state.items():
             if pos in valid_movement_positions:
@@ -512,10 +377,10 @@ class PuzzleState:
 
     def calc(self, node, g=False, h=False):
         """
-        Heuristic will be the manhatten distance
+        Heuristic will be the manhattan distance
 
         Can calculate the both the g and h costs with the associated flags
-        :param Node node:
+        :param int node:
         :param bool g:
         :param bool h:
         :return:
@@ -558,6 +423,7 @@ class PuzzleState:
     def calc_f(self, node):
         """
         Returns the sum of the g and h values for this node
+        :param int node: the node to calculate the f cost for
         :return:
         :rtype: int
         """
@@ -571,6 +437,7 @@ class PuzzleState:
         goal position
 
         In this case, the optimal puzzle value will have the empty space at pos 0
+        :param int node:
         :return: True if in the goal state, otherwise False.
         :rtype: bool
         """
@@ -596,15 +463,15 @@ class PuzzleState:
         return f_cost
 
 
-start = time.time()
+start_time = time.time()
 puzzle = Puzzle(options.file, True)
 solution = puzzle.solve2()
 
-print('Solution found in %s seconds, tracing back path to start node...' % (time.time() - start))
+print('Solution found in %s seconds, tracing back path to start node...' % (time.time() - start_time))
 Puzzle.print_path(solution)
 
-end = time.time()
-total_run_time = end - start
+end_time = time.time()
+total_run_time = end_time - start_time
 print("Total Time elapsed: %s" % total_run_time)
 
 
