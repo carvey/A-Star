@@ -6,6 +6,10 @@ Michael Palmer
 
 import copy
 import random
+import cProfile
+import timeit
+import time
+import argparse
 
 coord_map = {
     0: (0, 0),
@@ -18,6 +22,11 @@ coord_map = {
     7: (1, -2),
     8: (2, -2)
 }
+
+# define and collect user arguments
+parser = argparse.ArgumentParser("Specify a file containing a sample problem.")
+parser.add_argument("--file", type=str, required=True, help="puzzle file to parse")
+options = parser.parse_args()
 
 
 class Node:
@@ -246,7 +255,7 @@ class Puzzle:
         :rtype: bool
         """
         for x in sequence:
-            if x.__repr__() == item.__repr__():
+            if x.state == item.state:
                 return True
         return False
 
@@ -272,7 +281,7 @@ class Puzzle:
             open.remove(current)
             closed.add(current)
 
-            if current.__repr__() == goal_state.__repr__():
+            if current.state == goal_state.state:
                 return current
 
             cost = current.aggregate_f_costs
@@ -304,6 +313,29 @@ class Puzzle:
         # path = []
         self.expand(start_state)
 
+    @staticmethod
+    def print_path(state):
+        global moves
+        if state is None:
+            moves = 0
+            return
+        Puzzle.print_path(state.parent)
+        print('Move #%d' % moves)
+        print(state.print_state())
+        moves += 1
+
+    def run_stats(self, run_times=5):
+        timer = timeit.Timer(stmt=self.solve2)
+        times = timer.repeat(run_times, 1)
+        avg = sum(times) / len(times)
+        fails = [fail for fail in times if fail > 5]
+        success_rate = 100 - (len(fails) / run_times * 100)
+
+        print("Avg time over %s iterations: %s" % (run_times, avg))
+        print("Success Rate: %s%%" % success_rate)
+        print("Failure Count (iterations exceeding 5s): %s" % len(fails))
+        print("Failures: %s" % fails)
+
 
 class PuzzleState:
 
@@ -320,6 +352,7 @@ class PuzzleState:
 
         self.state = state
         self.parent = parent
+        # self.positions = {v: k for k, v in state.items()}
 
     def __str__(self):
         return self.print_state()
@@ -431,6 +464,10 @@ class PuzzleState:
         :return: the position of the given node in the state
         :rtype: int
         """
+
+        # This is 2-4x slower than the loop below. Why Michael????
+        # return self.positions[node]
+
         for pos, _node in self.state.items():
             if _node == node:
                 return pos
@@ -559,28 +596,19 @@ class PuzzleState:
         return f_cost
 
 
-p1 = Puzzle('sample-problems/p1', True)
-solution = p1.solve2()
+start = time.time()
+puzzle = Puzzle(options.file, True)
+solution = puzzle.solve2()
 
-print('Solution found, tracing back path to start node...')
+print('Solution found in %s seconds, tracing back path to start node...' % (time.time() - start))
+Puzzle.print_path(solution)
 
-moves = 0
-
-
-def print_path(state):
-    global moves
-    if state is None:
-        moves = 0
-        return
-    print_path(state.parent)
-    print('Move #%d' % moves)
-    print(state.print_state())
-    moves += 1
+end = time.time()
+total_run_time = end - start
+print("Total Time elapsed: %s" % total_run_time)
 
 
-print_path(solution)
-
-# states.reverse()
-# for i, state in enumerate(states):
-#     print('Moves: %d' % i)
-#     print(state.print_state())
+print("---------")
+# Comment these out as necessary
+puzzle.run_stats(25)
+# cProfile.run("puzzle.solve2()", sort="tottime")
