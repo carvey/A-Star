@@ -26,7 +26,6 @@ coord_map = {
 # define and collect user arguments
 parser = argparse.ArgumentParser("Specify a file containing a sample problem.")
 parser.add_argument("--file", type=str, required=True, help="puzzle file to parse")
-options = parser.parse_args()
 
 
 class Puzzle:
@@ -51,8 +50,12 @@ class Puzzle:
             start_state, goal_state = self.parse_full_data_string(data)
 
         # self.state = PuzzleState(state)
-        self.start_state = PuzzleState(start_state)
-        self.goal_state = PuzzleState(goal_state)
+        self.start_state = PuzzleState(state=start_state, goal_state=goal_state)
+        self.goal_state = PuzzleState(state=goal_state, goal_state=goal_state)
+
+        solvable = self.solvable()
+        if not solvable:
+            raise AttributeError("This Puzzle is not solvable.")
 
     def parse_file(self, file):
         """
@@ -83,7 +86,6 @@ class Puzzle:
 
     def parse_data(self, data):
         """
-
         :param str data: string containing just one string state -> start state or goal state
         :return:
         :rtype: dict
@@ -150,7 +152,7 @@ class Puzzle:
                 return True
         return False
 
-    def solve2(self):
+    def solve(self):
         """
         Solve it!
         :return: Solution
@@ -190,19 +192,57 @@ class Puzzle:
 
             # moves += 1
 
+    def solvable(self):
+
+        start_inversions = Puzzle.inversions(self.start_state.state)
+        goal_inversions = Puzzle.inversions(self.goal_state.state)
+
+        # the parity of inversions of the goal state and start state must be the same
+        return (goal_inversions % 2 == 0) == (start_inversions % 2 == 0)
+
+    @staticmethod
+    def inversions(state):
+        """
+        There is a way to do this O(nlogn) instead of O(n^2) but can implement that later
+
+        :param dict state: the mapping of positions to values
+        :return: the number of inversions present in that state
+        """
+        inversions = 0
+        values = list(state.values())
+        values.remove(0)
+
+        for i in range(7):
+            for j in range(i+1, 8):
+                if values[i] > values[j]:
+                    inversions += 1
+
+        return inversions
+
+    @staticmethod
+    def solution_path(state):
+        path = [state]
+
+        while state.parent:
+            state = state.parent
+            path.append(state)
+
+        return path
+
     @staticmethod
     def print_path(state):
-        global moves
-        if state is None:
-            moves = 0
-            return
-        Puzzle.print_path(state.parent)
-        print('Move #%d' % moves)
-        print(state.print_state())
-        moves += 1
+        solution_path = Puzzle.solution_path(state)
+
+        moves = 0
+        # reversed just returns an iterator, so no lengthy operations being done on the list
+        for sol in reversed(solution_path):
+            print('Move #%d' % moves)
+            print(sol.print_state())
+            moves +=1
+
 
     def run_stats(self, run_times=5):
-        timer = timeit.Timer(stmt=self.solve2)
+        timer = timeit.Timer(stmt=self.solve)
         times = timer.repeat(run_times, 1)
         avg = sum(times) / len(times)
         fails = [fail for fail in times if fail > 5]
@@ -213,6 +253,7 @@ class Puzzle:
         print("Failure Count (iterations exceeding 5s): %s" % len(fails))
         print("Failures: %s" % fails)
 
+        #TODO (engage scope creep mode) severity of failure stat based on number of failures and how much they were over 5s would be cool
 
 class PuzzleState:
 
@@ -220,9 +261,10 @@ class PuzzleState:
     # h = float('inf')
     # f = float('inf')
 
-    def __init__(self, state, parent=None):
+    def __init__(self, *, state, goal_state, parent=None):
         """
-
+        For sanity and clarity sake, the state and goal_state should be passed in as
+        kwargs and not args
         :param dict state:
         :param parent:
         """
@@ -230,6 +272,9 @@ class PuzzleState:
         self.state = state
         self.parent = parent
         # self.positions = {v: k for k, v in state.items()}
+
+        # pass a reference the puzzle's goal state in order for this instance to check for a match
+        self.goal_state = goal_state
 
     def __str__(self):
         return self.print_state()
@@ -278,11 +323,10 @@ class PuzzleState:
         :return: True if all nodes are in their proper place, False otherwise
         :rtype: bool
         """
-        for pos, node in self.state.items():
-            if not self.validate_node_goal_position(node):
-                return False
+        if self.state == self.goal_state:
+            return True
 
-        return True
+        return False
 
     def get_empty_node(self):
         """
@@ -365,7 +409,7 @@ class PuzzleState:
             if pos in valid_movement_positions:
                 # Make a copy
                 copied_state = copy.copy(self.state)
-                new_state = PuzzleState(copied_state)
+                new_state = PuzzleState(state=copied_state, goal_state=self.goal_state)
 
                 # Move the node in the new copy
                 new_state.move_node(child, node)
@@ -463,19 +507,22 @@ class PuzzleState:
         return f_cost
 
 
-start_time = time.time()
-puzzle = Puzzle(options.file, True)
-solution = puzzle.solve2()
+if __name__ == "__main__":
+    options = parser.parse_args()
 
-print('Solution found in %s seconds, tracing back path to start node...' % (time.time() - start_time))
-Puzzle.print_path(solution)
+    start_time = time.time()
+    puzzle = Puzzle(options.file, True)
+    solution = puzzle.solve()
 
-end_time = time.time()
-total_run_time = end_time - start_time
-print("Total Time elapsed: %s" % total_run_time)
+    print('Solution found in %s seconds, tracing back path to start node...' % (time.time() - start_time))
+    Puzzle.print_path(solution)
+
+    end_time = time.time()
+    total_run_time = end_time - start_time
+    print("Total Time elapsed: %s" % total_run_time)
 
 
-print("---------")
-# Comment these out as necessary
-puzzle.run_stats(25)
-# cProfile.run("puzzle.solve2()", sort="tottime")
+    print("---------")
+    # Comment these out as necessary
+    puzzle.run_stats(25)
+    # cProfile.run("puzzle.solve2()", sort="tottime")
