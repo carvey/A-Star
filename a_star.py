@@ -5,11 +5,10 @@ Michael Palmer
 """
 
 import copy
-import random
 import cProfile
 import timeit
 import time
-import argparse
+from argparse import ArgumentParser
 
 coord_map = {
     0: (0, 0),
@@ -24,7 +23,7 @@ coord_map = {
 }
 
 # define and collect user arguments
-parser = argparse.ArgumentParser("Specify a file containing a sample problem.")
+parser = ArgumentParser("Specify a file containing a sample problem.")
 parser.add_argument("--file", type=str, required=True, help="puzzle file to parse")
 
 
@@ -118,23 +117,30 @@ class Puzzle:
         return start_map, goal_map
 
     @staticmethod
-    def random_min(iterable, key=lambda x: x):
+    def find_best_state(iterable):
         """
-        Pick a random min using the key
+        Find the best state in an iterable using their f and h costs
 
-        :param set iterable: Set of items
-        :param key: Lambda expression to use to find the value of each item
-        :return: Minimum value
+        :param set of PuzzleState iterable: Set of states
+        :return: Best state
         :rtype: PuzzleState
         """
         # Convert set to list
         items = list(iterable)
 
-        # Shuffle it
-        random.shuffle(items)
+        # Find the minimum state
+        min_f_state = min(items, key=lambda item: item.f)
 
-        # Find the min
-        return min(items, key=key)
+        # Remove all states that have a higher f cost
+        for item in items:
+            if item.f != min_f_state.f:
+                items.remove(item)
+
+        # If more than one state have the same f cost, find the one with the best h cost
+        if len(items) > 1:
+            return min(items, key=lambda item: item.h)
+
+        return items[0]
 
     @staticmethod
     def state_in(item, sequence):
@@ -142,7 +148,7 @@ class Puzzle:
         Check if this state is in a sequence
 
         :param item:
-        :param set sequence:
+        :param set of PuzzleState sequence:
         :return: Boolean
         :rtype: bool
         """
@@ -162,12 +168,12 @@ class Puzzle:
         closed_states = set()
         open_states.add(start_state)
 
-        # iteration = 0
+        iteration = 0
 
-        while len(open_states) > 0:
-            current = self.random_min(open_states, key=lambda item: item.f)
-            # print('Iteration: %d' % iteration)
-            # print(current.print_state())
+        while open_states:
+            current = self.find_best_state(open_states)
+            print('Iteration: %d' % iteration)
+            print(current.print_state())
 
             open_states.remove(current)
             closed_states.add(current)
@@ -177,18 +183,21 @@ class Puzzle:
 
             cost = current.f
 
+            # for each possible move,
             for child in current.actions():
                 if self.state_in(child, closed_states):
                     continue
 
                 if child.f < cost or not self.state_in(child, open_states):
-                    # current.f = current.aggregate_f_costs
+                    # current.f = child.f
+                    # current.g = child.g
+                    # current.h = child.h
                     child.parent = current
 
                     if not self.state_in(child, open_states):
                         open_states.add(child)
 
-            # iteration += 1
+            iteration += 1
 
     def solvable(self):
 
@@ -243,9 +252,13 @@ class Puzzle:
         times = timer.repeat(run_times, 1)
         avg = sum(times) / len(times)
         fails = [fail for fail in times if fail > 5]
+        min_time = min(times)
+        max_time = max(times)
         success_rate = 100 - (len(fails) / run_times * 100)
 
         print("Avg time over %s iterations: %s" % (run_times, avg))
+        print("Minimum time: %s" % min_time)
+        print("Maximum time: %s" % max_time)
         print("Success Rate: %s%%" % success_rate)
         print("Failure Count (iterations exceeding 5s): %s" % len(fails))
         print("Failures: %s" % fails)
@@ -463,17 +476,6 @@ class PuzzleState:
 
         return dst
 
-    def calc_f(self, node):
-        """
-        Returns the sum of the g and h values for this node
-        :param int node: the node to calculate the f cost for
-        :return:
-        :rtype: tuple of int
-        """
-        g = self.calc(node, g=True)
-        h = self.calc(node, h=True)
-        return g + h, g, h
-
     def validate_node_goal_position(self, node):
         """
         Will make sure that value of the node aligns with its position
@@ -500,10 +502,10 @@ class PuzzleState:
 
         # loop over the state and add up each nodes f, g, and h costs
         for pos, node in self.state.items():
-            f, g, h = self.calc_f(node)
-            self.f += f
-            self.g += g
-            self.h += h
+            self.g += self.calc(node, g=True)
+            self.h += self.calc(node, h=True)
+
+        self.f = self.g + self.h
 
 
 if __name__ == "__main__":
