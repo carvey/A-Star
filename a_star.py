@@ -165,7 +165,7 @@ class Puzzle:
         # iteration = 0
 
         while len(open_states) > 0:
-            current = self.random_min(open_states, key=lambda item: item.aggregate_f_costs)
+            current = self.random_min(open_states, key=lambda item: item.f)
             # print('Iteration: %d' % iteration)
             # print(current.print_state())
 
@@ -175,13 +175,13 @@ class Puzzle:
             if current.validate_goal_state():
                 return current
 
-            cost = current.aggregate_f_costs
+            cost = current.f
 
             for child in current.actions():
                 if self.state_in(child, closed_states):
                     continue
 
-                if child.aggregate_f_costs < cost or not self.state_in(child, open_states):
+                if child.f < cost or not self.state_in(child, open_states):
                     # current.f = current.aggregate_f_costs
                     child.parent = current
 
@@ -238,7 +238,6 @@ class Puzzle:
             print(sol.print_state())
             moves +=1
 
-
     def run_stats(self, run_times=5):
         timer = timeit.Timer(stmt=self.solve)
         times = timer.repeat(run_times, 1)
@@ -256,9 +255,9 @@ class Puzzle:
 
 class PuzzleState:
 
-    # g = 0
-    # h = float('inf')
-    # f = float('inf')
+    g = float('inf')
+    h = float('inf')
+    f = float('inf')
 
     parent = None
 
@@ -354,6 +353,8 @@ class PuzzleState:
         # switch the nodes in the puzzle states dict
         self.state[empty_pos] = moving_node
         self.state[moving_pos] = empty_node
+
+        self.calc_aggregate_costs()
 
     def print_state(self):
         """
@@ -455,10 +456,10 @@ class PuzzleState:
 
         dst = abs(start_x - goal_x) + abs(start_y - goal_y)
 
-        # if g:
-        #     node.g = dst
-        # elif h:
-        #     node.h = dst
+        if g:
+            self.g = dst
+        elif h:
+            self.h = dst
 
         return dst
 
@@ -467,9 +468,11 @@ class PuzzleState:
         Returns the sum of the g and h values for this node
         :param int node: the node to calculate the f cost for
         :return:
-        :rtype: int
+        :rtype: tuple of int
         """
-        return self.calc(node, g=True) + self.calc(node, h=True)
+        g = self.calc(node, g=True)
+        h = self.calc(node, h=True)
+        return g + h, g, h
 
     def validate_node_goal_position(self, node):
         """
@@ -486,23 +489,21 @@ class PuzzleState:
         pos = self.node_position(node)
         return node == pos
 
-    # TODO: Probably doesn't make it any faster as a property, but this really needs to be a static value because
-    # I bet this running multiple times in the loop is adding a lot of runtime.
-    @property
-    def aggregate_f_costs(self):
+    def calc_aggregate_costs(self):
         """
-        Get the cumulative f cost for an entire puzzle state. This is to give us an estimate on whether the move
+        Calculate the cumulative costs for an entire puzzle state. This is to give us an estimate on whether the move
         we are making will be getting us closer to our goal state or not.
-        :return: the aggregate f cost for an entire puzzle state
-        :rtype: int
         """
-        f_cost = 0
-        # loop over the state and add up each nodes f cost
-        for pos, node in self.state.items():
-            f = self.calc_f(node)
-            f_cost += f
+        self.f = 0
+        self.g = 0
+        self.h = 0
 
-        return f_cost
+        # loop over the state and add up each nodes f, g, and h costs
+        for pos, node in self.state.items():
+            f, g, h = self.calc_f(node)
+            self.f += f
+            self.g += g
+            self.h += h
 
 
 if __name__ == "__main__":
