@@ -5,9 +5,9 @@ Michael Palmer
 """
 
 import cProfile
-import timeit
-import time
 from argparse import ArgumentParser
+from time import time
+from timeit import Timer
 
 coord_map = {
     0: (0, 0),
@@ -140,7 +140,7 @@ class Puzzle:
 
         # If more than one state have the same f cost, find the one with the best h cost
         if len(states) > 1:
-            return min(items, key=lambda item: item.h)
+            return min(states, key=lambda item: item.h)
 
         return states[0]
 
@@ -247,7 +247,7 @@ class Puzzle:
             moves +=1
 
     def run_stats(self, run_times=5):
-        timer = timeit.Timer(stmt=self.solve)
+        timer = Timer(stmt=self.solve)
         times = timer.repeat(run_times, 1)
         avg = sum(times) / len(times)
         fails = [fail for fail in times if fail > 5]
@@ -504,14 +504,14 @@ class PuzzleState:
 if __name__ == "__main__":
     options = parser.parse_args()
 
-    start_time = time.time()
+    start_time = time()
     puzzle = Puzzle(options.file, True)
     solution = puzzle.solve()
 
-    print('Solution found in %s seconds, tracing back path to start node...' % (time.time() - start_time))
+    print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
     Puzzle.print_path(solution)
 
-    end_time = time.time()
+    end_time = time()
     total_run_time = end_time - start_time
     print("Total Time elapsed: %s" % total_run_time)
 
