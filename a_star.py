@@ -284,7 +284,6 @@ class PuzzleState:
         """
 
         self.state = state
-        # self.state = list(state.values())
         # self.positions = {v: k for k, v in state.items()}
         self.positions = sorted(state, key=state.__getitem__)
 
