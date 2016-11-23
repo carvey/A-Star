@@ -1,6 +1,7 @@
 import unittest
 from a_star import Puzzle
 
+
 class PuzzleTests(unittest.TestCase):
 
     def test_inversions(self):
@@ -15,7 +16,7 @@ class PuzzleTests(unittest.TestCase):
 
         self.assertEqual(state1_inversions, 0)
 
-         # To represent a puzzle state with values 0, 1, 2, 7, 4, 5, 6, 3, 8 (inversions: 7)
+        # To represent a puzzle state with values 0, 1, 2, 7, 4, 5, 6, 3, 8 (inversions: 7)
         state2 = {0: 0, 1: 1, 2: 2, 3: 7, 4: 4, 5: 5, 6: 6, 7: 3, 8: 8}
         state2_inversions = Puzzle.inversions(state2)
 
@@ -73,11 +74,12 @@ class PuzzleTests(unittest.TestCase):
         0 2 5
         4 1 6
         """
-        puzzle3 = Puzzle(puzzle3_string)
-        solvable3 = puzzle3.solvable()
-        print(Puzzle.inversions(puzzle3.start_state.state))
-        print(Puzzle.inversions(puzzle3.goal_state.state))
-        self.assertFalse(solvable3)
+        with self.assertRaises(AttributeError):
+            puzzle3 = Puzzle(puzzle3_string)
+            solvable3 = puzzle3.solvable()
+            print(Puzzle.inversions(puzzle3.start_state.state))
+            print(Puzzle.inversions(puzzle3.goal_state.state))
+            self.assertFalse(solvable3)
 
     def test_solve_same_start_goal(self):
         puzzle1_string = """
