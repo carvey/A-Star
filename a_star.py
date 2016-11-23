@@ -183,14 +183,12 @@ class Puzzle:
             if current.validate_goal_state():
                 return current
 
-            cost = current.f
-
             # for each possible move,
             for child in current.actions():
                 if self.state_in(child, closed_states):
                     continue
 
-                if child.f < cost or not self.state_in(child, open_states):
+                if child.f < current.f or not self.state_in(child, open_states):
                     # current.f = child.f
                     # current.g = child.g
                     # current.h = child.h
