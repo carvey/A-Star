@@ -518,5 +518,5 @@ if __name__ == "__main__":
 
     print("---------")
     # Comment these out as necessary
-    puzzle.run_stats(25)
-    # cProfile.run("puzzle.solve2()", sort="tottime")
+    # puzzle.run_stats(25)
+    # cProfile.run("puzzle.solve()", sort="tottime")
