@@ -158,7 +158,6 @@ class Puzzle:
         :rtype: PuzzleState
         """
         start_state = self.start_state
-        goal_state = self.goal_state
         open_states = set()
         closed_states = set()
         open_states.add(start_state)
@@ -173,7 +172,7 @@ class Puzzle:
             open_states.remove(current)
             closed_states.add(current)
 
-            if current.state == goal_state.state:
+            if current.validate_goal_state():
                 return current
 
             cost = current.aggregate_f_costs
@@ -252,7 +251,7 @@ class Puzzle:
         print("Failure Count (iterations exceeding 5s): %s" % len(fails))
         print("Failures: %s" % fails)
 
-        #TODO (engage scope creep mode) severity of failure stat based on number of failures and how much they were over 5s would be cool
+        # TODO (engage scope creep mode) severity of failure stat based on number of failures and how much they were over 5s would be cool
 
 
 class PuzzleState:
@@ -261,16 +260,18 @@ class PuzzleState:
     # h = float('inf')
     # f = float('inf')
 
-    def __init__(self, *, state, goal_state, parent=None):
+    parent = None
+
+    def __init__(self, *, state, goal_state):
         """
         For sanity and clarity sake, the state and goal_state should be passed in as
         kwargs and not args
-        :param dict state:
-        :param parent:
+
+        :param dict state: Puzzle state
+        :param dict goal_state: Goal state
         """
 
         self.state = state
-        self.parent = parent
         # self.positions = {v: k for k, v in state.items()}
 
         # pass a reference the puzzle's goal state in order for this instance to check for a match
@@ -323,10 +324,7 @@ class PuzzleState:
         :return: True if all nodes are in their proper place, False otherwise
         :rtype: bool
         """
-        if self.state == self.goal_state:
-            return True
-
-        return False
+        return self.state == self.goal_state
 
     def get_empty_node(self):
         """
