@@ -49,8 +49,13 @@ class Puzzle:
             start_state, goal_state = self.parse_full_data_string(data)
 
         # self.state = PuzzleState(state)
-        self.start_state = PuzzleState(state=start_state, goal_state=goal_state)
-        self.goal_state = PuzzleState(state=goal_state, goal_state=goal_state)
+        self.start_state = PuzzleState(state=start_state, puzzle=self)
+        self.goal_state = PuzzleState(state=goal_state, puzzle=self)
+
+        self.start_state.calc_aggregate_costs()
+        self.goal_state.f = 0
+        self.goal_state.g = 0
+        self.goal_state.h = 0
 
         solvable = self.solvable()
         if not solvable:
@@ -131,16 +136,14 @@ class Puzzle:
         # Find the minimum state
         min_f_state = min(items, key=lambda item: item.f)
 
-        # Remove all states that have a higher f cost
-        for item in items:
-            if item.f != min_f_state.f:
-                items.remove(item)
+        # Find all states that have the minimum f cost
+        states = [item for item in items if item.f == min_f_state.f]
 
         # If more than one state have the same f cost, find the one with the best h cost
-        if len(items) > 1:
+        if len(states) > 1:
             return min(items, key=lambda item: item.h)
 
-        return items[0]
+        return states[0]
 
     @staticmethod
     def state_in(item, sequence):
@@ -163,17 +166,16 @@ class Puzzle:
         :return: Solution
         :rtype: PuzzleState
         """
-        start_state = self.start_state
         open_states = set()
         closed_states = set()
-        open_states.add(start_state)
+        open_states.add(self.start_state)
 
-        iteration = 0
+        # iteration = 0
 
         while open_states:
             current = self.find_best_state(open_states)
-            print('Iteration: %d' % iteration)
-            print(current.print_state())
+            # print('Iteration: %d' % iteration)
+            # print(current.print_state())
 
             open_states.remove(current)
             closed_states.add(current)
@@ -197,7 +199,7 @@ class Puzzle:
                     if not self.state_in(child, open_states):
                         open_states.add(child)
 
-            iteration += 1
+            # iteration += 1
 
     def solvable(self):
 
@@ -274,20 +276,20 @@ class PuzzleState:
 
     parent = None
 
-    def __init__(self, *, state, goal_state):
+    def __init__(self, *, state, puzzle):
         """
         For sanity and clarity sake, the state and goal_state should be passed in as
         kwargs and not args
 
         :param dict state: Puzzle state
-        :param dict goal_state: Goal state
+        :param Puzzle puzzle: Puzzle
         """
 
         self.state = state
-        # self.positions = {v: k for k, v in state.items()}
+        self.positions = {v: k for k, v in state.items()}
 
         # pass a reference the puzzle's goal state in order for this instance to check for a match
-        self.goal_state = goal_state
+        self.puzzle = puzzle
 
     def __str__(self):
         return self.print_state()
@@ -336,7 +338,7 @@ class PuzzleState:
         :return: True if all nodes are in their proper place, False otherwise
         :rtype: bool
         """
-        return self.state == self.goal_state
+        return self.state == self.puzzle.goal_state.state
 
     def get_empty_node(self):
         """
@@ -421,7 +423,7 @@ class PuzzleState:
             if pos in valid_movement_positions:
                 # Make a copy
                 copied_state = copy.copy(self.state)
-                new_state = PuzzleState(state=copied_state, goal_state=self.goal_state)
+                new_state = PuzzleState(state=copied_state, puzzle=self.puzzle)
 
                 # Move the node in the new copy
                 new_state.move_node(child, node)
@@ -431,19 +433,18 @@ class PuzzleState:
 
         return actions
 
-    def calc(self, node, g=False, h=False):
+    def calc(self, pos, node, g=False, h=False):
         """
         Heuristic will be the manhattan distance
 
         Can calculate the both the g and h costs with the associated flags
-        :param int node:
+        :param int pos: Node position
+        :param int node: Nod
         :param bool g:
         :param bool h:
         :return:
         :rtype: int
         """
-
-        current_node_position = self.node_position(node)
 
         start = None
         end = None
@@ -452,12 +453,12 @@ class PuzzleState:
             raise Exception('A single heuristic must be specified')
 
         if g:
-            start = current_node_position
-            end = node
+            start = pos
+            end = self.puzzle.start_state.node_position(node)
 
         elif h:
-            start = current_node_position
-            end = node
+            start = pos
+            end = self.puzzle.goal_state.node_position(node)
 
         start_coords = coord_map[start]
         start_x = start_coords[0]
@@ -468,11 +469,6 @@ class PuzzleState:
         goal_y = goal_coords[1]
 
         dst = abs(start_x - goal_x) + abs(start_y - goal_y)
-
-        if g:
-            self.g = dst
-        elif h:
-            self.h = dst
 
         return dst
 
@@ -502,8 +498,8 @@ class PuzzleState:
 
         # loop over the state and add up each nodes f, g, and h costs
         for pos, node in self.state.items():
-            self.g += self.calc(node, g=True)
-            self.h += self.calc(node, h=True)
+            self.g += self.calc(pos, node, g=True)
+            self.h += self.calc(pos, node, h=True)
 
         self.f = self.g + self.h
 
