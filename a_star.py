@@ -95,7 +95,6 @@ class Puzzle:
 
         data = data.replace(" ", "").replace("\n", "")
         for val in data:
-            # node = Node(int(val), pos)
             state_map[pos] = int(val)
             pos += 1
 
@@ -164,11 +163,11 @@ class Puzzle:
         closed_states = set()
         open_states.add(start_state)
 
-        # moves = 0
+        # iteration = 0
 
         while len(open_states) > 0:
             current = self.random_min(open_states, key=lambda item: item.aggregate_f_costs)
-            # print('Moves: %d' % moves)
+            # print('Iteration: %d' % iteration)
             # print(current.print_state())
 
             open_states.remove(current)
@@ -190,7 +189,7 @@ class Puzzle:
                     if not self.state_in(child, open_states):
                         open_states.add(child)
 
-            # moves += 1
+            # iteration += 1
 
     def solvable(self):
 
@@ -254,6 +253,7 @@ class Puzzle:
         print("Failures: %s" % fails)
 
         #TODO (engage scope creep mode) severity of failure stat based on number of failures and how much they were over 5s would be cool
+
 
 class PuzzleState:
 
@@ -333,7 +333,7 @@ class PuzzleState:
         Get the node containing the empty value (0)
 
         :return: Start node
-        :rtype: Node
+        :rtype: int
         """
         for pos, node in self.state.items():
             if node == 0:
@@ -342,8 +342,8 @@ class PuzzleState:
     def move_node(self, moving_node, empty_node):
         """
         Switches a real node with the node holding the val 0
-        :param Node moving_node: The node that is being moved into the "empty" space, which is just a node with val 0
-        :param Node empty_node:
+        :param int moving_node: The node that is being moved into the "empty" space, which is just a node with val 0
+        :param int empty_node:
         :rtype: None
         """
         if empty_node != 0:
@@ -382,7 +382,7 @@ class PuzzleState:
         """
         Returns the given nodes position in the current state
 
-        :param Node node: the node to search for
+        :param int node: the node to search for
         :return: the position of the given node in the state
         :rtype: int
         """
@@ -520,7 +520,6 @@ if __name__ == "__main__":
     end_time = time.time()
     total_run_time = end_time - start_time
     print("Total Time elapsed: %s" % total_run_time)
-
 
     print("---------")
     # Comment these out as necessary
