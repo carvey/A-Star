@@ -351,16 +351,23 @@ class PuzzleState:
             raise Exception("Can't move to a position that does not contain the 0 value")
 
         # create dummy vars to hold the positions of each node while we switch
-        moving_pos = self.node_position(moving_node)
-        empty_pos = self.node_position(empty_node)
+        # moving_pos = self.node_position(moving_node)
+        # empty_pos = self.node_position(empty_node)
+        moving_pos = self.positions[moving_node]
+        empty_pos = self.positions[empty_node]
 
         # switch the nodes in the puzzle states dict
-        self.state[empty_pos] = moving_node
-        self.state[moving_pos] = empty_node
+        self.state[empty_pos], self.state[moving_pos] = self.state[moving_pos], self.state[empty_pos]
+
+        self.positions[empty_node], self.positions[moving_node] = \
+            self.positions[moving_node], self.positions[empty_node]
+
+        # self.state[empty_pos] = moving_node
+        # self.state[moving_pos] = empty_node
 
         # switch the positions
-        self.positions[moving_node] = empty_pos
-        self.positions[empty_node] = moving_pos
+        # self.positions[moving_node] = moving_pos
+        # self.positions[empty_node] = empty_pos
 
         self.calc_aggregate_costs()
 
@@ -385,21 +392,21 @@ class PuzzleState:
 
         return puzzle_state
 
-    def node_position(self, node):
-        """
-        Returns the given nodes position in the current state
-
-        :param int node: the node to search for
-        :return: the position of the given node in the state
-        :rtype: int
-        """
-
-        # This is 2-4x slower than the loop below. Why Michael????
-        return self.positions[node]
-
-        # for pos, _node in enumerate(self.state):
-        #     if _node == node:
-        #         return pos
+    # def node_position(self, node):
+    #     """
+    #     Returns the given nodes position in the current state
+    #
+    #     :param int node: the node to search for
+    #     :return: the position of the given node in the state
+    #     :rtype: int
+    #     """
+    #
+    #     # This is 2-4x slower than the loop below. Why Michael????
+    #     return self.positions[node]
+    #
+    #     # for pos, _node in enumerate(self.state):
+    #     #     if _node == node:
+    #     #         return pos
 
     def actions(self):
         """
@@ -408,7 +415,7 @@ class PuzzleState:
         :return: List of actions
         :rtype: list of PuzzleState
         """
-        node_pos = self.node_position(0)
+        node_pos = self.positions[0]
         valid_movement_positions = PuzzleState.valid_movement_positions(node_pos)
         actions = []
         for pos, child in enumerate(self.state):
@@ -446,11 +453,11 @@ class PuzzleState:
 
         if g:
             start = pos
-            end = self.puzzle.start_state.node_position(node)
+            end = self.puzzle.start_state.positions[node]
 
         elif h:
             start = pos
-            end = self.puzzle.goal_state.node_position(node)
+            end = self.puzzle.goal_state.positions[node]
 
         start_coords = coord_map[start]
         start_x, start_y = start_coords
@@ -465,21 +472,6 @@ class PuzzleState:
     @property
     def f(self):
         return self.g + self.h
-
-    def validate_node_goal_position(self, node):
-        """
-        Will make sure that value of the node aligns with its position
-
-        This will have to change once we have dynamic goal states, as a nodes value will not always line up with its
-        goal position
-
-        In this case, the optimal puzzle value will have the empty space at pos 0
-        :param int node:
-        :return: True if in the goal state, otherwise False.
-        :rtype: bool
-        """
-        pos = self.node_position(node)
-        return node == pos
 
     def calc_aggregate_costs(self):
         """
