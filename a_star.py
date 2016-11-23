@@ -469,21 +469,6 @@ class PuzzleState:
 
         return dst
 
-    def validate_node_goal_position(self, node):
-        """
-        Will make sure that value of the node aligns with its position
-
-        This will have to change once we have dynamic goal states, as a nodes value will not always line up with its
-        goal position
-
-        In this case, the optimal puzzle value will have the empty space at pos 0
-        :param int node:
-        :return: True if in the goal state, otherwise False.
-        :rtype: bool
-        """
-        pos = self.node_position(node)
-        return node == pos
-
     def calc_aggregate_costs(self):
         """
         Calculate the cumulative costs for an entire puzzle state. This is to give us an estimate on whether the move
