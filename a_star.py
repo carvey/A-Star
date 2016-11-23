@@ -358,6 +358,7 @@ class PuzzleState:
         # switch the nodes in the puzzle states dict
         self.state[empty_pos], self.state[moving_pos] = self.state[moving_pos], self.state[empty_pos]
 
+        # TODO: Disabling this line makes it go faster and get 40 moves consistently on test3_0 for some reason...
         self.positions[empty_node], self.positions[moving_node] = \
             self.positions[moving_node], self.positions[empty_node]
 
