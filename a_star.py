@@ -4,7 +4,6 @@ Charles Arvey
 Michael Palmer
 """
 
-import copy
 import cProfile
 import timeit
 import time
@@ -420,7 +419,7 @@ class PuzzleState:
         for pos, child in self.state.items():
             if pos in valid_movement_positions:
                 # Make a copy
-                copied_state = copy.copy(self.state)
+                copied_state = self.state.copy()
                 new_state = PuzzleState(state=copied_state, puzzle=self.puzzle)
 
                 # Move the node in the new copy
