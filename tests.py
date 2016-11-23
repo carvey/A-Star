@@ -22,11 +22,11 @@ class PuzzleTests(unittest.TestCase):
 
         self.assertEqual(state2_inversions, 7)
 
-        # To represent a puzzle state with values 8, 7, 6, 5, 4, 3, 2, 1, 0 (inversions: 36)
+        # To represent a puzzle state with values 8, 7, 6, 5, 4, 3, 2, 1, 0 (inversions: 28)
         state3 = {0: 8, 1: 7, 2: 6, 3: 5, 4: 4, 5: 3, 6: 2, 7: 1, 8: 0}
         state3_inversions = Puzzle.inversions(state3)
 
-        self.assertEqual(state3_inversions, 36)
+        self.assertEqual(state3_inversions, 28)
 
     def test_solvable(self):
         # start1 = {0: 7, 1: 3, 2: 8, 3: 0, 4: 2, 5: 5, 6: 1, 7: 4, 8: 6}
@@ -81,6 +81,9 @@ class PuzzleTests(unittest.TestCase):
             print(Puzzle.inversions(puzzle3.goal_state.state))
             self.assertFalse(solvable3)
 
+
+class SolveTests(unittest.TestCase):
+
     def test_solve_same_start_goal(self):
         puzzle1_string = """
         0 1 2
@@ -97,3 +100,18 @@ class PuzzleTests(unittest.TestCase):
         self.assertEqual(len(solution_path), 1)
 
 
+    def test_solve_dynamic_goal_state(self):
+        puzzle_string = """
+        1 2 3
+        4 5 6
+        7 0 8
+
+        1 2 3
+        4 5 6
+        7 8 0
+        """
+        puzzle = Puzzle(puzzle_string)
+        solution = puzzle.solve()
+        solution_path = Puzzle.solution_path(solution)
+        Puzzle.print_path(solution)
+        self.assertEqual(len(solution_path), 2)
