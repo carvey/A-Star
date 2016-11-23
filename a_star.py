@@ -52,7 +52,7 @@ class Puzzle:
         self.goal_state = PuzzleState(state=goal_state, puzzle=self)
 
         self.start_state.calc_aggregate_costs()
-        self.goal_state.f = 0
+        # self.goal_state.f = 0
         self.goal_state.g = 0
         self.goal_state.h = 0
 
@@ -270,7 +270,7 @@ class PuzzleState:
 
     g = float('inf')
     h = float('inf')
-    f = float('inf')
+    # f = float('inf')
 
     parent = None
 
@@ -369,6 +369,10 @@ class PuzzleState:
         self.state[empty_pos] = moving_node
         self.state[moving_pos] = empty_node
 
+        # switch the positions
+        self.positions[moving_node] = empty_pos
+        self.positions[empty_node] = moving_pos
+
         self.calc_aggregate_costs()
 
     def print_state(self):
@@ -461,16 +465,18 @@ class PuzzleState:
             end = self.puzzle.goal_state.node_position(node)
 
         start_coords = coord_map[start]
-        start_x = start_coords[0]
-        start_y = start_coords[1]
+        start_x, start_y = start_coords
 
         goal_coords = coord_map[end]
-        goal_x = goal_coords[0]
-        goal_y = goal_coords[1]
+        goal_x, goal_y = goal_coords
 
         dst = abs(start_x - goal_x) + abs(start_y - goal_y)
 
         return dst
+
+    @property
+    def f(self):
+        return self.g + self.h
 
     def validate_node_goal_position(self, node):
         """
@@ -492,7 +498,7 @@ class PuzzleState:
         Calculate the cumulative costs for an entire puzzle state. This is to give us an estimate on whether the move
         we are making will be getting us closer to our goal state or not.
         """
-        self.f = 0
+        # self.f = 0
         self.g = 0
         self.h = 0
 
@@ -501,7 +507,7 @@ class PuzzleState:
             self.g += self.calc(pos, node, g=True)
             self.h += self.calc(pos, node, h=True)
 
-        self.f = self.g + self.h
+        # self.f = self.g + self.h
 
 
 if __name__ == "__main__":
