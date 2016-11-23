@@ -96,7 +96,6 @@ class SolveTests(unittest.TestCase):
         solution_path = Puzzle.solution_path(solution)
         self.assertEqual(len(solution_path), 1)
 
-
     def test_solve_dynamic_goal_state(self):
         puzzle_string = """
         1 2 3
