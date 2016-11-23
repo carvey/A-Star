@@ -133,16 +133,12 @@ class Puzzle:
         items = list(iterable)
 
         # Find the minimum state
-        min_f_state = min(items, key=lambda item: item.f)
+        best_state = None
+        for item in items:
+            if not best_state or (item.f <= best_state.f and item.h < best_state.h):
+                best_state = item
 
-        # Find all states that have the minimum f cost
-        states = [item for item in items if item.f == min_f_state.f]
-
-        # If more than one state have the same f cost, find the one with the best h cost
-        if len(states) > 1:
-            return min(states, key=lambda item: item.h)
-
-        return states[0]
+        return best_state
 
     @staticmethod
     def state_in(item, sequence):
