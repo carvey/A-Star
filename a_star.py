@@ -211,7 +211,7 @@ class Puzzle:
         """
         There is a way to do this O(nlogn) instead of O(n^2) but can implement that later
 
-        :param dict state: the mapping of positions to values
+        :param list state: the mapping of positions to values
         :return: the number of inversions present in that state
         """
         inversions = 0
