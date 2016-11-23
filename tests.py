@@ -11,31 +11,25 @@ class PuzzleTests(unittest.TestCase):
         max inversions: 36
         """
         # To represent a puzzle state with values 0, 1, 2, 3, 4, 5, 6, 7, 8 (inversions: 0)
-        # state1 = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8}
         state1 = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         state1_inversions = Puzzle.inversions(state1)
 
         self.assertEqual(state1_inversions, 0)
 
         # To represent a puzzle state with values 0, 1, 2, 7, 4, 5, 6, 3, 8 (inversions: 7)
-        # state2 = {0: 0, 1: 1, 2: 2, 3: 7, 4: 4, 5: 5, 6: 6, 7: 3, 8: 8}
         state2 = [0, 1, 2, 7, 4, 5, 6, 3, 8]
         state2_inversions = Puzzle.inversions(state2)
 
         self.assertEqual(state2_inversions, 7)
 
         # To represent a puzzle state with values 8, 7, 6, 5, 4, 3, 2, 1, 0 (inversions: 28)
-        # state3 = {0: 8, 1: 7, 2: 6, 3: 5, 4: 4, 5: 3, 6: 2, 7: 1, 8: 0}
         state3 = [8, 7, 6, 5, 4, 3, 2, 1, 0]
         state3_inversions = Puzzle.inversions(state3)
 
         self.assertEqual(state3_inversions, 28)
 
     def test_solvable(self):
-        # start1 = {0: 7, 1: 3, 2: 8, 3: 0, 4: 2, 5: 5, 6: 1, 7: 4, 8: 6}
-        # goal1 = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8}
-
-        #TODO Puzzle should probably accept some more ways to input start/goal states, or solvable could be static and take in state dicts
+        # TODO Puzzle should probably accept some more ways to input start/goal states, or solvable could be static and take in state dicts
         # start inversions: 16, goal inversions: 0
         # 16 and 0 both even, so solvable should be true
         puzzle1_string = """
