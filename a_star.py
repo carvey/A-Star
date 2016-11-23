@@ -340,17 +340,6 @@ class PuzzleState:
         """
         return self.state == self.puzzle.goal_state.state
 
-    def get_empty_node(self):
-        """
-        Get the node containing the empty value (0)
-
-        :return: Start node
-        :rtype: int
-        """
-        for node in self.state:
-            if node == 0:
-                return node
-
     def move_node(self, moving_node, empty_node):
         """
         Switches a real node with the node holding the val 0
@@ -419,8 +408,7 @@ class PuzzleState:
         :return: List of actions
         :rtype: list of PuzzleState
         """
-        node = self.get_empty_node()
-        node_pos = self.node_position(node)
+        node_pos = self.node_position(0)
         valid_movement_positions = PuzzleState.valid_movement_positions(node_pos)
         actions = []
         for pos, child in enumerate(self.state):
@@ -430,7 +418,7 @@ class PuzzleState:
                 new_state = PuzzleState(state=copied_state, puzzle=self.puzzle)
 
                 # Move the node in the new copy
-                new_state.move_node(child, node)
+                new_state.move_node(child, 0)
 
                 # Add to actions
                 actions.append(new_state)
