@@ -91,15 +91,15 @@ class Puzzle:
         """
         :param str data: string containing just one string state -> start state or goal state
         :return:
-        :rtype: dict
+        :rtype: list
         """
-        pos = 0
-        state_map = {}
+        # pos = 0
+        state_map = []
 
         data = data.replace(" ", "").replace("\n", "")
         for val in data:
-            state_map[pos] = int(val)
-            pos += 1
+            state_map.append(int(val))
+            # pos += 1
 
         return state_map
 
@@ -215,7 +215,8 @@ class Puzzle:
         :return: the number of inversions present in that state
         """
         inversions = 0
-        values = list(state.values())
+        # values = list(state.values())
+        values = list(state)
         values.remove(0)
 
         for i in range(7):
@@ -278,12 +279,14 @@ class PuzzleState:
         For sanity and clarity sake, the state and goal_state should be passed in as
         kwargs and not args
 
-        :param dict state: Puzzle state
+        :param list state: Puzzle state
         :param Puzzle puzzle: Puzzle
         """
 
         self.state = state
-        self.positions = {v: k for k, v in state.items()}
+        # self.state = list(state.values())
+        # self.positions = {v: k for k, v in state.items()}
+        self.positions = sorted(state, key=state.__getitem__)
 
         # pass a reference the puzzle's goal state in order for this instance to check for a match
         self.puzzle = puzzle
@@ -344,7 +347,7 @@ class PuzzleState:
         :return: Start node
         :rtype: int
         """
-        for pos, node in self.state.items():
+        for node in self.state:
             if node == 0:
                 return node
 
@@ -377,7 +380,7 @@ class PuzzleState:
         """
         cnt = 1
         puzzle_state = ""
-        for pos, node in self.state.items():
+        for node in self.state:
             if node == 0:
                 node = " "
             if cnt % 3 == 0:
@@ -399,11 +402,11 @@ class PuzzleState:
         """
 
         # This is 2-4x slower than the loop below. Why Michael????
-        # return self.positions[node]
+        return self.positions[node]
 
-        for pos, _node in self.state.items():
-            if _node == node:
-                return pos
+        # for pos, _node in enumerate(self.state):
+        #     if _node == node:
+        #         return pos
 
     def actions(self):
         """
@@ -416,7 +419,7 @@ class PuzzleState:
         node_pos = self.node_position(node)
         valid_movement_positions = PuzzleState.valid_movement_positions(node_pos)
         actions = []
-        for pos, child in self.state.items():
+        for pos, child in enumerate(self.state):
             if pos in valid_movement_positions:
                 # Make a copy
                 copied_state = self.state.copy()
@@ -494,7 +497,7 @@ class PuzzleState:
         self.h = 0
 
         # loop over the state and add up each nodes f, g, and h costs
-        for pos, node in self.state.items():
+        for pos, node in enumerate(self.state):
             self.g += self.calc(pos, node, g=True)
             self.h += self.calc(pos, node, h=True)
 
