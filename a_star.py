@@ -176,17 +176,20 @@ class Puzzle:
             closed_states.add(current)
 
             if current.validate_goal_state():
+                print('G-Cost: %d' % current.g)
                 return current
+
+            # Cost of making a move
+            g_cost = current.g + 1
 
             # for each possible move,
             for child in current.actions():
                 if self.state_in(child, closed_states):
                     continue
 
-                if child.f < current.f or not self.state_in(child, open_states):
-                    # current.f = child.f
-                    # current.g = child.g
-                    # current.h = child.h
+                if g_cost < child.g or not self.state_in(child, open_states):
+                    child.g = g_cost
+                    child.f = child.g + child.h
                     child.parent = current
 
                     if not self.state_in(child, open_states):
@@ -239,8 +242,10 @@ class Puzzle:
         # reversed just returns an iterator, so no lengthy operations being done on the list
         for sol in reversed(solution_path):
             print('Move #%d' % moves)
+            print('%s + %s = %s' % (sol.g, sol.h, sol.f))
             print(sol.print_state())
-            moves +=1
+            moves += 1
+        return moves - 1
 
     def run_stats(self, run_times=5):
         timer = Timer(stmt=self.solve)
@@ -485,6 +490,28 @@ if __name__ == "__main__":
     print("Total Time elapsed: %s" % total_run_time)
 
     print("---------")
+
+    # Keep trying to solve until the optimal solution is found.
+    # EXPECTED_MOVES = 28
+    # puzzle_moves = 0
+    # attempt = 1
+    #
+    # while puzzle_moves != EXPECTED_MOVES:
+    #     print('Attempt #%d' % attempt)
+    #     start_time = time()
+    #     puzzle = Puzzle(options.file, True)
+    #     solution = puzzle.solve()
+    #
+    #     print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
+    #     puzzle_moves = Puzzle.print_path(solution)
+    #
+    #     end_time = time()
+    #     total_run_time = end_time - start_time
+    #     print("Total Time elapsed: %s" % total_run_time)
+    #
+    #     print("---------" * 5)
+    #     attempt += 1
+
     # Comment these out as necessary
     # puzzle.run_stats(25)
     # cProfile.run("puzzle.solve()", sort="tottime")
