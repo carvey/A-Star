@@ -4,21 +4,21 @@ Charles Arvey
 Michael Palmer
 """
 
-import cProfile
+# import cProfile
 from argparse import ArgumentParser
 from time import time
 from timeit import Timer
 
 coord_map = {
-    0: (0, 0),
-    1: (1, 0),
-    2: (2, 0),
-    3: (0, -1),
-    4: (1, -1),
-    5: (2, -1),
-    6: (0, -2),
-    7: (1, -2),
-    8: (2, -2)
+    0: (0.0, 0.0),
+    1: (1.0, 0.0),
+    2: (2.0, 0.0),
+    3: (0.0, -1.0),
+    4: (1.0, -1.0),
+    5: (2.0, -1.0),
+    6: (0.0, -2.0),
+    7: (1.0, -2.0),
+    8: (2.0, -2.0)
 }
 
 # define and collect user arguments
@@ -38,26 +38,19 @@ class Puzzle:
         :param file: Flag to set if passing in file
         :return:
         """
-        start_state = None
-        goal_state = None
-
         if file:  # the data being passed in is a file to be parsed
             start_state, goal_state = self.parse_file(data)
 
         else:  # the data being passed in is a string containing a start and goal state
             start_state, goal_state = self.parse_full_data_string(data)
 
-        # self.state = PuzzleState(state)
         self.start_state = PuzzleState(state=start_state, puzzle=self)
         self.goal_state = PuzzleState(state=goal_state, puzzle=self)
 
         self.start_state.calc_aggregate_costs()
-        self.goal_state.f = 0
-        self.goal_state.g = 0
-        self.goal_state.h = 0
+        self.goal_state.h = 0.0
 
-        solvable = self.solvable()
-        if not solvable:
+        if not self.solvable():
             raise AttributeError("This Puzzle is not solvable.")
 
     def parse_file(self, file):
@@ -176,11 +169,11 @@ class Puzzle:
             closed_states.add(current)
 
             if current.validate_goal_state():
-                print('G-Cost: %d' % current.g)
+                # print('G-Cost: %d' % current.g)
                 return current
 
             # Cost of making a move
-            g_cost = current.g + 1
+            g_cost = current.g + 1.0
 
             # for each possible move,
             for child in current.actions():
@@ -189,7 +182,6 @@ class Puzzle:
 
                 if g_cost < child.g or not self.state_in(child, open_states):
                     child.g = g_cost
-                    child.f = child.g + child.h
                     child.parent = current
 
                     if not self.state_in(child, open_states):
@@ -268,9 +260,12 @@ class Puzzle:
 
 class PuzzleState:
 
-    g = float('inf')
-    h = float('inf')
-    f = float('inf')
+    g = 0.0
+    h = 0.0
+
+    @property
+    def f(self):
+        return self.g + self.h
 
     parent = None
 
@@ -282,9 +277,7 @@ class PuzzleState:
         :param dict state: Puzzle state
         :param Puzzle puzzle: Puzzle
         """
-
         self.state = state
-        # self.positions = {v: k for k, v in state.items()}
 
         # pass a reference the puzzle's goal state in order for this instance to check for a match
         self.puzzle = puzzle
@@ -388,9 +381,6 @@ class PuzzleState:
         :rtype: int
         """
 
-        # This is 2-4x slower than the loop below. Why Michael????
-        # return self.positions[node]
-
         for pos, _node in self.state.items():
             if _node == node:
                 return pos
@@ -419,60 +409,83 @@ class PuzzleState:
 
         return actions
 
-    def calc(self, pos, node, g=False, h=False):
+    def calc(self, pos, node):
         """
         Heuristic will be the manhattan distance
 
         Can calculate the both the g and h costs with the associated flags
-        :param int pos: Node position
-        :param int node: Nod
-        :param bool g:
-        :param bool h:
+        :param int pos: Start node position
+        :param int node: Node
         :return:
         :rtype: int
         """
+        end = self.puzzle.goal_state.node_position(node)
+        current_x, current_y = coord_map[pos]
+        goal_x, goal_y = coord_map[end]
 
-        start = None
-        end = None
+        dst = abs(current_x - goal_x) + abs(current_y - goal_y)
 
-        if (g and h) or (not g and not h):
-            raise Exception('A single heuristic must be specified')
+        return float(dst)
 
-        if g:
-            start = pos
-            end = self.puzzle.start_state.node_position(node)
+    def calc_linear_conflict(self):
+        """
+        Linear Conflict Tiles Definition: Two tiles tj and tk are in a linear conflict if tj and tk are in the same
+        line, the goal positions of tj and tk are both in that line, tj is to the right of tk and goal position of
+        tj is to the left of the goal position of tk.
 
-        elif h:
-            start = pos
-            end = self.puzzle.goal_state.node_position(node)
+        :param start:
+        :param node:
+        :return:
+        """
+        linear_vertical_conflict = 0
+        linear_horizontal_conflict = 0
 
-        start_coords = coord_map[start]
-        start_x = start_coords[0]
-        start_y = start_coords[1]
+        rows = [
+            [self.state[0], self.state[1], self.state[2]],
+            [self.state[3], self.state[4], self.state[5]],
+            [self.state[6], self.state[7], self.state[8]]
+        ]
 
-        goal_coords = coord_map[end]
-        goal_x = goal_coords[0]
-        goal_y = goal_coords[1]
+        for row, row_list in enumerate(rows):
+            maximum = -1
+            for col, value in enumerate(row_list):
+                if value != 0 and (value - 1) / 3 == row:
+                    if value > maximum:
+                        maximum = value
+                    else:
+                        linear_horizontal_conflict += 2
 
-        dst = abs(start_x - goal_x) + abs(start_y - goal_y)
+        cols = [
+            [self.state[0], self.state[3], self.state[6]],
+            [self.state[1], self.state[4], self.state[7]],
+            [self.state[2], self.state[5], self.state[8]]
+        ]
 
-        return dst
+        for col, col_list in enumerate(cols):
+            maximum = -1
+            for row, value in enumerate(col_list):
+                if value != 0 and value % 3 == col + 1:
+                    if value > maximum:
+                        maximum = value
+                    else:
+                        linear_horizontal_conflict += 2
+
+        return linear_vertical_conflict + linear_horizontal_conflict
 
     def calc_aggregate_costs(self):
         """
         Calculate the cumulative costs for an entire puzzle state. This is to give us an estimate on whether the move
         we are making will be getting us closer to our goal state or not.
         """
-        self.f = 0
-        self.g = 0
-        self.h = 0
 
         # loop over the state and add up each nodes f, g, and h costs
+        manhattan = 0
         for pos, node in self.state.items():
-            self.g += self.calc(pos, node, g=True)
-            self.h += self.calc(pos, node, h=True)
+            manhattan += self.calc(pos, node)
 
-        self.f = self.g + self.h
+        total = manhattan + self.calc_linear_conflict()
+        self.h = total
+        return total
 
 
 if __name__ == "__main__":
