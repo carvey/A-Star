@@ -6,6 +6,7 @@ Michael Palmer
 
 import cProfile
 from argparse import ArgumentParser
+# from queue import PriorityQueue
 from time import time
 from timeit import Timer
 
@@ -137,7 +138,7 @@ class Puzzle:
         Check if this state is in a sequence
 
         :param item:
-        :param set of PuzzleState sequence:
+        :param set of PuzzleState | list of PuzzleState sequence:
         :return: Boolean
         :rtype: bool
         """
@@ -152,22 +153,41 @@ class Puzzle:
         :return: Solution
         :rtype: PuzzleState
         """
-        open_states = set()
+        open_states = []
+        open_state_states = set()
+        # open_states = PriorityQueue()
         closed_states = set()
-        open_states.add(self.start_state)
+        open_states.append(self.start_state)
+        open_state_states.add(self.start_state)
+        # open_states.put((self.start_state.f + self.start_state.h, self.start_state))
 
-        # iteration = 0
+        iteration = 0
+
+        def sort_costs(a, b):
+            if b.f > a.f:
+                return -1
+            elif b.f < a.f:
+                return 1
+
+            if b.h > a.h:
+                return -1
+            elif b.h < a.h:
+                return 1
+
+            return 0
 
         while open_states:
-            current = self.find_best_state(open_states)
+            current = open_states.pop(0)
+            open_state_states.remove(current)
+            # current = current[1]
             # print('Iteration: %d' % iteration)
             # print(current.print_state())
 
-            open_states.remove(current)
+            # open_states.remove(current)
             closed_states.add(current)
 
             if current.validate_goal_state():
-                print('G-Cost: %d' % current.g)
+                # print('G-Cost: %d' % current.g)
                 return current
 
             # Cost of making a move
@@ -178,15 +198,19 @@ class Puzzle:
                 if self.state_in(child, closed_states):
                     continue
 
-                if g_cost < child.g or not self.state_in(child, open_states):
+                if g_cost < child.g or child not in open_state_states:
                     child.g = g_cost
                     child.f = child.g + child.h
                     child.parent = current
 
-                    if not self.state_in(child, open_states):
-                        open_states.add(child)
+                    if child not in open_state_states:
+                        open_states.append(child)
+                        open_state_states.add(child)
 
-            # iteration += 1
+            # open_states.task_done()
+            open_states.sort(cmp=sort_costs)
+
+            iteration += 1
 
     def solvable(self):
 
@@ -265,7 +289,9 @@ class PuzzleState:
 
     parent = None
 
-    def __init__(self, *, state, puzzle):
+    _hash = 0
+
+    def __init__(self, state=None, puzzle=None):
         """
         For sanity and clarity sake, the state and goal_state should be passed in as
         kwargs and not args
@@ -277,6 +303,11 @@ class PuzzleState:
         self.state = state
         # self.positions = {v: k for k, v in state.items()}
 
+        output = ""
+        for pos, node in self.state.items():
+            output += str(node)
+        self._hash = int(output)
+
         # pass a reference the puzzle's goal state in order for this instance to check for a match
         self.puzzle = puzzle
 
@@ -285,6 +316,57 @@ class PuzzleState:
 
     def __repr__(self):
         return self.print_state()
+
+    # def __lt__(self, other):
+    #     if type(other) is tuple:
+    #         return self.f + self.h < other[0] or (self.f + self.h == other[0] and self.h < other[1].h)
+    #         # result = self.f - other[0]
+    #         # if result == 0:
+    #         #     result = other[1].g - self.g
+    #         # return result < 0
+    #     """
+    #     int result = (o1.getCost() + heuristic.h(o1)) - (o2.getCost() + heuristic.h(o1));
+    #
+		# 	if (result == 0){
+		# 		//Ties among minimal f values are resolved in favor of the deepest node in the search tree
+		# 		//i.e. the closest node to the goal
+		# 		result =  o2.getCost() - o1.getCost();
+    #
+		# 	}
+    #     """
+    #     return self.f < other.f or (self.f == other.f and self.h < other.h)
+    #
+    # def __le__(self, other):
+    #     if type(other) is tuple:
+    #         other = other[1]
+    #     return self.f <= other.f or (self.f == other.f and self.h <= other.h)
+    #
+    # def __gt__(self, other):
+    #     if type(other) is tuple:
+    #         other = other[1]
+    #     return self.f > other.f or (self.f == other.f and self.h > other.h)
+    #
+    # def __ge__(self, other):
+    #     if type(other) is tuple:
+    #         other = other[1]
+    #     return self.f >= other.f or (self.f == other.f and self.h >= other.h)
+    #
+    # def __eq__(self, other):
+    #     if type(other) is tuple:
+    #         return self.f + self.h == other[0] and self.h == other[1].h
+    #         # result = self.f - other[0]
+    #         # if result == 0:
+    #         #     result = other[1].g - self.g
+    #         # return result == 0
+    #     return self.f == other.f and self.h == other.h
+    #
+    # def __ne__(self, other):
+    #     if type(other) is tuple:
+    #         other = other[1]
+    #     return self.f != other.f and self.h != other.h
+    #
+    def __hash__(self):
+        return self._hash
 
     @staticmethod
     def valid_movement_positions(position):
@@ -348,6 +430,11 @@ class PuzzleState:
         self.state[moving_pos] = empty_node
 
         self.calc_aggregate_costs()
+
+        output = ""
+        for pos, node in self.state.items():
+            output += str(node)
+        self._hash = int(output)
 
     def print_state(self):
         """
