@@ -38,23 +38,14 @@ class Puzzle:
         :param file: Flag to set if passing in file
         :return:
         """
-        start_state = None
-        goal_state = None
-
         if file:  # the data being passed in is a file to be parsed
             start_state, goal_state = self.parse_file(data)
 
         else:  # the data being passed in is a string containing a start and goal state
             start_state, goal_state = self.parse_full_data_string(data)
 
-        # self.state = PuzzleState(state)
         self.start_state = PuzzleState(state=start_state, puzzle=self)
         self.goal_state = PuzzleState(state=goal_state, puzzle=self)
-
-        self.start_state.calc_aggregate_costs()
-        # self.goal_state.f = 0
-        self.goal_state.g = 0
-        self.goal_state.h = 0
 
         solvable = self.solvable()
         if not solvable:
@@ -135,7 +126,7 @@ class Puzzle:
         # Find the minimum state
         best_state = None
         for item in items:
-            if not best_state or (item.f <= best_state.f and item.h < best_state.h):
+            if not best_state or item.f < best_state.f or (item.f == best_state.f and item.h < best_state.h):
                 best_state = item
 
         return best_state
@@ -176,17 +167,19 @@ class Puzzle:
             closed_states.add(current)
 
             if current.validate_goal_state():
+                print('G-Cost: %d' % current.g)
                 return current
+
+            # Cost of making a move
+            g_cost = current.g + 1
 
             # for each possible move,
             for child in current.actions():
                 if self.state_in(child, closed_states):
                     continue
 
-                if child.f < current.f or not self.state_in(child, open_states):
-                    # current.f = child.f
-                    # current.g = child.g
-                    # current.h = child.h
+                if g_cost < child.g or not self.state_in(child, open_states):
+                    child.g = g_cost
                     child.parent = current
 
                     if not self.state_in(child, open_states):
@@ -240,8 +233,10 @@ class Puzzle:
         # reversed just returns an iterator, so no lengthy operations being done on the list
         for sol in reversed(solution_path):
             print('Move #%d' % moves)
+            print('%s + %s = %s' % (sol.g, sol.h, sol.f))
             print(sol.print_state())
-            moves +=1
+            moves += 1
+        return moves - 1
 
     def run_stats(self, run_times=5):
         timer = Timer(stmt=self.solve)
@@ -264,9 +259,12 @@ class Puzzle:
 
 class PuzzleState:
 
-    g = float('inf')
-    h = float('inf')
-    # f = float('inf')
+    g = 0
+    h = 0
+
+    @property
+    def f(self):
+        return self.g + self.h
 
     parent = None
 
@@ -281,7 +279,7 @@ class PuzzleState:
 
         self.state = state
         # self.positions = {v: k for k, v in state.items()}
-        self.positions = sorted(state, key=state.__getitem__)
+        # self.positions = sorted(state, key=state.__getitem__)
 
         # pass a reference the puzzle's goal state in order for this instance to check for a match
         self.puzzle = puzzle
@@ -428,38 +426,21 @@ class PuzzleState:
 
         return actions
 
-    def calc(self, pos, node, g=False, h=False):
+    def calc(self, start, node):
         """
         Heuristic will be the manhattan distance
 
         Can calculate the both the g and h costs with the associated flags
-        :param int pos: Node position
-        :param int node: Nod
-        :param bool g:
-        :param bool h:
+        :param int start: Start node position
+        :param int node: Node
         :return:
         :rtype: int
         """
 
-        start = None
-        end = None
+        end = self.puzzle.goal_state.node_position(node)
 
-        if (g and h) or (not g and not h):
-            raise Exception('A single heuristic must be specified')
-
-        if g:
-            start = pos
-            end = self.puzzle.start_state.positions[node]
-
-        elif h:
-            start = pos
-            end = self.puzzle.goal_state.positions[node]
-
-        start_coords = coord_map[start]
-        start_x, start_y = start_coords
-
-        goal_coords = coord_map[end]
-        goal_x, goal_y = goal_coords
+        start_x, start_y = coord_map[start]
+        goal_x, goal_y = coord_map[end]
 
         dst = abs(start_x - goal_x) + abs(start_y - goal_y)
 
@@ -474,16 +455,11 @@ class PuzzleState:
         Calculate the cumulative costs for an entire puzzle state. This is to give us an estimate on whether the move
         we are making will be getting us closer to our goal state or not.
         """
-        # self.f = 0
-        self.g = 0
         self.h = 0
 
         # loop over the state and add up each nodes f, g, and h costs
-        for pos, node in enumerate(self.state):
-            self.g += self.calc(pos, node, g=True)
-            self.h += self.calc(pos, node, h=True)
-
-        # self.f = self.g + self.h
+        for pos, node in self.state.items():
+            self.h += self.calc(pos, node)
 
 
 if __name__ == "__main__":
@@ -501,6 +477,28 @@ if __name__ == "__main__":
     print("Total Time elapsed: %s" % total_run_time)
 
     print("---------")
+
+    # Keep trying to solve until the optimal solution is found.
+    # EXPECTED_MOVES = 28
+    # puzzle_moves = 0
+    # attempt = 1
+    #
+    # while puzzle_moves != EXPECTED_MOVES:
+    #     print('Attempt #%d' % attempt)
+    #     start_time = time()
+    #     puzzle = Puzzle(options.file, True)
+    #     solution = puzzle.solve()
+    #
+    #     print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
+    #     puzzle_moves = Puzzle.print_path(solution)
+    #
+    #     end_time = time()
+    #     total_run_time = end_time - start_time
+    #     print("Total Time elapsed: %s" % total_run_time)
+    #
+    #     print("---------" * 5)
+    #     attempt += 1
+
     # Comment these out as necessary
     # puzzle.run_stats(25)
     # cProfile.run("puzzle.solve()", sort="tottime")
