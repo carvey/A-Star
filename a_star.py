@@ -38,23 +38,14 @@ class Puzzle:
         :param file: Flag to set if passing in file
         :return:
         """
-        start_state = None
-        goal_state = None
-
         if file:  # the data being passed in is a file to be parsed
             start_state, goal_state = self.parse_file(data)
 
         else:  # the data being passed in is a string containing a start and goal state
             start_state, goal_state = self.parse_full_data_string(data)
 
-        # self.state = PuzzleState(state)
         self.start_state = PuzzleState(state=start_state, puzzle=self)
         self.goal_state = PuzzleState(state=goal_state, puzzle=self)
-
-        self.start_state.calc_aggregate_costs()
-        self.goal_state.f = 0
-        self.goal_state.g = 0
-        self.goal_state.h = 0
 
         solvable = self.solvable()
         if not solvable:
@@ -189,7 +180,6 @@ class Puzzle:
 
                 if g_cost < child.g or not self.state_in(child, open_states):
                     child.g = g_cost
-                    child.f = child.g + child.h
                     child.parent = current
 
                     if not self.state_in(child, open_states):
@@ -268,9 +258,12 @@ class Puzzle:
 
 class PuzzleState:
 
-    g = float('inf')
-    h = float('inf')
-    f = float('inf')
+    g = 0
+    h = 0
+
+    @property
+    def f(self):
+        return self.g + self.h
 
     parent = None
 
@@ -419,40 +412,21 @@ class PuzzleState:
 
         return actions
 
-    def calc(self, pos, node, g=False, h=False):
+    def calc(self, start, node):
         """
         Heuristic will be the manhattan distance
 
         Can calculate the both the g and h costs with the associated flags
-        :param int pos: Node position
-        :param int node: Nod
-        :param bool g:
-        :param bool h:
+        :param int start: Start node position
+        :param int node: Node
         :return:
         :rtype: int
         """
 
-        start = None
-        end = None
+        end = self.puzzle.goal_state.node_position(node)
 
-        if (g and h) or (not g and not h):
-            raise Exception('A single heuristic must be specified')
-
-        if g:
-            start = pos
-            end = self.puzzle.start_state.node_position(node)
-
-        elif h:
-            start = pos
-            end = self.puzzle.goal_state.node_position(node)
-
-        start_coords = coord_map[start]
-        start_x = start_coords[0]
-        start_y = start_coords[1]
-
-        goal_coords = coord_map[end]
-        goal_x = goal_coords[0]
-        goal_y = goal_coords[1]
+        start_x, start_y = coord_map[start]
+        goal_x, goal_y = coord_map[end]
 
         dst = abs(start_x - goal_x) + abs(start_y - goal_y)
 
@@ -463,16 +437,11 @@ class PuzzleState:
         Calculate the cumulative costs for an entire puzzle state. This is to give us an estimate on whether the move
         we are making will be getting us closer to our goal state or not.
         """
-        self.f = 0
-        self.g = 0
         self.h = 0
 
         # loop over the state and add up each nodes f, g, and h costs
         for pos, node in self.state.items():
-            self.g += self.calc(pos, node, g=True)
-            self.h += self.calc(pos, node, h=True)
-
-        self.f = self.g + self.h
+            self.h += self.calc(pos, node)
 
 
 if __name__ == "__main__":
