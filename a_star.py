@@ -425,6 +425,7 @@ class PuzzleState:
         dst = abs(current_x - goal_x) + abs(current_y - goal_y)
 
         return dst
+
     def calc_linear_conflict(self):
         """
         Linear Conflict Tiles Definition: Two tiles tj and tk are in a linear conflict if tj and tk are in the same
