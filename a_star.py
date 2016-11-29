@@ -180,6 +180,7 @@ class Puzzle:
 
                 if g_cost < child.g or not self.state_in(child, open_states):
                     child.g = g_cost
+                    child.f = child.g + child.h
                     child.parent = current
 
                     if not self.state_in(child, open_states):
@@ -260,10 +261,7 @@ class PuzzleState:
 
     g = 0
     h = 0
-
-    @property
-    def f(self):
-        return self.g + self.h
+    f = 0
 
     parent = None
 
@@ -442,6 +440,8 @@ class PuzzleState:
         # loop over the state and add up each nodes f, g, and h costs
         for pos, node in self.state.items():
             self.h += self.calc(pos, node)
+
+        self.f = self.g + self.h
 
 
 if __name__ == "__main__":
