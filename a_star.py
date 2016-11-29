@@ -4,7 +4,7 @@ Charles Arvey
 Michael Palmer
 """
 
-import cProfile
+# import cProfile
 from argparse import ArgumentParser
 from time import time
 from timeit import Timer
@@ -112,16 +112,16 @@ class Puzzle:
         return start_map, goal_map
 
     @staticmethod
-    def find_best_state(iterable):
+    def find_best_state(items):
         """
         Find the best state in an iterable using their f and h costs
 
-        :param set of PuzzleState iterable: Set of states
+        :param list of PuzzleState items: Set of states
         :return: Best state
         :rtype: PuzzleState
         """
         # Convert set to list
-        items = list(iterable)
+        # items = list(iterable)
 
         # Find the minimum state
         best_state = None
@@ -131,20 +131,20 @@ class Puzzle:
 
         return best_state
 
-    @staticmethod
-    def state_in(item, sequence):
-        """
-        Check if this state is in a sequence
-
-        :param item:
-        :param set of PuzzleState sequence:
-        :return: Boolean
-        :rtype: bool
-        """
-        for x in sequence:
-            if x.state == item.state:
-                return True
-        return False
+    # @staticmethod
+    # def state_in(item, sequence):
+    #     """
+    #     Check if this state is in a sequence
+    #
+    #     :param item:
+    #     :param list of PuzzleState sequence:
+    #     :return: Boolean
+    #     :rtype: bool
+    #     """
+    #     for x in sequence:
+    #         if x.state == item.state:
+    #             return True
+    #     return False
 
     def solve(self):
         """
@@ -152,9 +152,12 @@ class Puzzle:
         :return: Solution
         :rtype: PuzzleState
         """
-        open_states = set()
-        closed_states = set()
-        open_states.add(self.start_state)
+        open_states = list()
+        open_state_states = list()
+        closed_states = list()
+        closed_state_states = list()
+        open_states.append(self.start_state)
+        open_state_states.append(self.start_state.state)
 
         # iteration = 0
 
@@ -164,7 +167,9 @@ class Puzzle:
             # print(current.print_state())
 
             open_states.remove(current)
-            closed_states.add(current)
+            open_state_states.remove(current.state)
+            closed_states.append(current)
+            closed_state_states.append(current.state)
 
             if current.validate_goal_state():
                 print('G-Cost: %d' % current.g)
@@ -175,16 +180,17 @@ class Puzzle:
 
             # for each possible move,
             for child in current.actions():
-                if self.state_in(child, closed_states):
+                if child.state in closed_state_states:
                     continue
 
-                if g_cost < child.g or not self.state_in(child, open_states):
+                if g_cost < child.g or child.state not in open_state_states:
                     child.g = g_cost
                     child.f = child.g + child.h
                     child.parent = current
 
-                    if not self.state_in(child, open_states):
-                        open_states.add(child)
+                    if child.state not in open_state_states:
+                        open_states.append(child)
+                        open_state_states.append(child.state)
 
             # iteration += 1
 
