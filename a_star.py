@@ -128,7 +128,7 @@ class Puzzle:
         # Find the minimum state
         best_state = None
         for item in items:
-            if not best_state or (item.f <= best_state.f and item.h < best_state.h):
+            if not best_state or item.f < best_state.f or (item.f == best_state.f and item.h < best_state.h):
                 best_state = item
 
         return best_state
