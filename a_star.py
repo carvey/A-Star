@@ -4,7 +4,7 @@ Charles Arvey
 Michael Palmer
 """
 
-import cProfile
+# import cProfile
 from argparse import ArgumentParser
 from time import time
 from timeit import Timer
@@ -84,13 +84,11 @@ class Puzzle:
         :return:
         :rtype: list
         """
-        # pos = 0
         state_map = []
 
         data = data.replace(" ", "").replace("\n", "")
         for val in data:
             state_map.append(int(val))
-            # pos += 1
 
         return state_map
 
@@ -167,7 +165,7 @@ class Puzzle:
             closed_states.add(current)
 
             if current.validate_goal_state():
-                print('G-Cost: %d' % current.g)
+                # print('G-Cost: %d' % current.g)
                 return current
 
             # Cost of making a move
@@ -205,7 +203,6 @@ class Puzzle:
         :return: the number of inversions present in that state
         """
         inversions = 0
-        # values = list(state.values())
         values = list(state)
         values.remove(0)
 
@@ -234,7 +231,7 @@ class Puzzle:
         # reversed just returns an iterator, so no lengthy operations being done on the list
         for sol in reversed(solution_path):
             print('Move #%d' % moves)
-            print('%s + %s = %s' % (sol.g, sol.h, sol.f))
+            # print('%s + %s = %s' % (sol.g, sol.h, sol.f))
             print(sol.print_state())
             moves += 1
         return moves - 1
@@ -274,9 +271,7 @@ class PuzzleState:
         :param list state: Puzzle state
         :param Puzzle puzzle: Puzzle
         """
-
         self.state = state
-        # self.positions = {v: k for k, v in state.items()}
         self.positions = sorted(state, key=state.__getitem__)
 
         # pass a reference the puzzle's goal state in order for this instance to check for a match
@@ -342,24 +337,15 @@ class PuzzleState:
             raise Exception("Can't move to a position that does not contain the 0 value")
 
         # create dummy vars to hold the positions of each node while we switch
-        # moving_pos = self.node_position(moving_node)
-        # empty_pos = self.node_position(empty_node)
         moving_pos = self.positions[moving_node]
         empty_pos = self.positions[empty_node]
 
         # switch the nodes in the puzzle states dict
         self.state[empty_pos], self.state[moving_pos] = self.state[moving_pos], self.state[empty_pos]
 
-        # TODO: Disabling this line makes it go faster and get 40 moves consistently on test3_0 for some reason...
+        # switch the positions
         self.positions[empty_node], self.positions[moving_node] = \
             self.positions[moving_node], self.positions[empty_node]
-
-        # self.state[empty_pos] = moving_node
-        # self.state[moving_pos] = empty_node
-
-        # switch the positions
-        # self.positions[moving_node] = moving_pos
-        # self.positions[empty_node] = empty_pos
 
         self.calc_aggregate_costs()
 
@@ -383,22 +369,6 @@ class PuzzleState:
             cnt += 1
 
         return puzzle_state
-
-    # def node_position(self, node):
-    #     """
-    #     Returns the given nodes position in the current state
-    #
-    #     :param int node: the node to search for
-    #     :return: the position of the given node in the state
-    #     :rtype: int
-    #     """
-    #
-    #     # This is 2-4x slower than the loop below. Why Michael????
-    #     return self.positions[node]
-    #
-    #     # for pos, _node in enumerate(self.state):
-    #     #     if _node == node:
-    #     #         return pos
 
     def actions(self):
         """
@@ -473,27 +443,6 @@ if __name__ == "__main__":
     print("Total Time elapsed: %s" % total_run_time)
 
     print("---------")
-
-    # Keep trying to solve until the optimal solution is found.
-    # EXPECTED_MOVES = 28
-    # puzzle_moves = 0
-    # attempt = 1
-    #
-    # while puzzle_moves != EXPECTED_MOVES:
-    #     print('Attempt #%d' % attempt)
-    #     start_time = time()
-    #     puzzle = Puzzle(options.file, True)
-    #     solution = puzzle.solve()
-    #
-    #     print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
-    #     puzzle_moves = Puzzle.print_path(solution)
-    #
-    #     end_time = time()
-    #     total_run_time = end_time - start_time
-    #     print("Total Time elapsed: %s" % total_run_time)
-    #
-    #     print("---------" * 5)
-    #     attempt += 1
 
     # Comment these out as necessary
     # puzzle.run_stats(25)
