@@ -131,20 +131,17 @@ class Puzzle:
 
         return best_state
 
-    # @staticmethod
-    # def state_in(item, sequence):
-    #     """
-    #     Check if this state is in a sequence
-    #
-    #     :param item:
-    #     :param list of PuzzleState sequence:
-    #     :return: Boolean
-    #     :rtype: bool
-    #     """
-    #     for x in sequence:
-    #         if x.state == item.state:
-    #             return True
-    #     return False
+    @staticmethod
+    def state_in(item, sequence):
+        """
+        Check if this state is in a sequence
+
+        :param item:
+        :param list of PuzzleState sequence:
+        :return: Boolean
+        :rtype: bool
+        """
+        return item.state in sequence
 
     def solve(self):
         """
@@ -172,7 +169,7 @@ class Puzzle:
             closed_state_states.append(current.state)
 
             if current.validate_goal_state():
-                print('G-Cost: %d' % current.g)
+                # print('G-Cost: %d' % current.g)
                 return current
 
             # Cost of making a move
@@ -180,15 +177,15 @@ class Puzzle:
 
             # for each possible move,
             for child in current.actions():
-                if child.state in closed_state_states:
+                if self.state_in(child, closed_state_states):
                     continue
 
-                if g_cost < child.g or child.state not in open_state_states:
+                if g_cost < child.g or not self.state_in(child, open_state_states):
                     child.g = g_cost
                     child.f = child.g + child.h
                     child.parent = current
 
-                    if child.state not in open_state_states:
+                    if not self.state_in(child, open_state_states):
                         open_states.append(child)
                         open_state_states.append(child.state)
 
@@ -239,7 +236,7 @@ class Puzzle:
         # reversed just returns an iterator, so no lengthy operations being done on the list
         for sol in reversed(solution_path):
             print('Move #%d' % moves)
-            print('%s + %s = %s' % (sol.g, sol.h, sol.f))
+            # print('%s + %s = %s' % (sol.g, sol.h, sol.f))
             print(sol.print_state())
             moves += 1
         return moves - 1
@@ -467,27 +464,6 @@ if __name__ == "__main__":
     print("Total Time elapsed: %s" % total_run_time)
 
     print("---------")
-
-    # Keep trying to solve until the optimal solution is found.
-    # EXPECTED_MOVES = 28
-    # puzzle_moves = 0
-    # attempt = 1
-    #
-    # while puzzle_moves != EXPECTED_MOVES:
-    #     print('Attempt #%d' % attempt)
-    #     start_time = time()
-    #     puzzle = Puzzle(options.file, True)
-    #     solution = puzzle.solve()
-    #
-    #     print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
-    #     puzzle_moves = Puzzle.print_path(solution)
-    #
-    #     end_time = time()
-    #     total_run_time = end_time - start_time
-    #     print("Total Time elapsed: %s" % total_run_time)
-    #
-    #     print("---------" * 5)
-    #     attempt += 1
 
     # Comment these out as necessary
     # puzzle.run_stats(25)
