@@ -452,7 +452,9 @@ if __name__ == "__main__":
     solution = puzzle.solve()
 
     print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
-    Puzzle.print_path(solution)
+    optimal_moves = Puzzle.print_path(solution)
+
+    print('Optimal Moves: %d' % optimal_moves)
 
     end_time = time()
     total_run_time = end_time - start_time
