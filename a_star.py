@@ -47,6 +47,8 @@ class Puzzle:
         self.start_state = PuzzleState(state=start_state, puzzle=self)
         self.goal_state = PuzzleState(state=goal_state, puzzle=self)
 
+        self.start_state.calc_aggregate_costs()
+
         solvable = self.solvable()
         if not solvable:
             raise AttributeError("This Puzzle is not solvable.")
@@ -120,15 +122,16 @@ class Puzzle:
         :return: Best state
         :rtype: PuzzleState
         """
-        # Convert set to list
         items = list(iterable)
+        # print("Options: %s" % ["%d+%d=%d" % (x.g, x.h, x.f) for x in items])
 
         # Find the minimum state
         best_state = None
         for item in items:
-            if not best_state or item.f < best_state.f or (item.f == best_state.f and item.h < best_state.h):
+            if not best_state or item.f < best_state.f or (item.f == best_state.f and item.h < best_state.h) or (item.f == best_state.f and item.h == best_state.h and item.g < best_state.g):
                 best_state = item
 
+        # print("Best: %s" % best_state.f)
         return best_state
 
     @staticmethod
@@ -173,7 +176,6 @@ class Puzzle:
             # Cost of making a move
             g_cost = current.g + 1
 
-            # for each possible move,
             for child in current.actions():
                 if self.state_in(child, closed_states):
                     continue
@@ -233,7 +235,7 @@ class Puzzle:
         # reversed just returns an iterator, so no lengthy operations being done on the list
         for sol in reversed(solution_path):
             print('Move #%d' % moves)
-            print('%s + %s = %s' % (sol.g, sol.h, sol.f))
+            # print('%s + %s = %s' % (sol.g, sol.h, sol.f))
             print(sol.print_state())
             moves += 1
         return moves - 1
@@ -439,7 +441,8 @@ class PuzzleState:
 
         # loop over the state and add up each nodes f, g, and h costs
         for pos, node in self.state.items():
-            self.h += self.calc(pos, node)
+            if node != 0:
+                self.h += self.calc(pos, node)
 
         self.f = self.g + self.h
 
