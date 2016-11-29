@@ -279,7 +279,7 @@ class PuzzleState:
 
         self.state = state
         # self.positions = {v: k for k, v in state.items()}
-        # self.positions = sorted(state, key=state.__getitem__)
+        self.positions = sorted(state, key=state.__getitem__)
 
         # pass a reference the puzzle's goal state in order for this instance to check for a match
         self.puzzle = puzzle
@@ -437,7 +437,7 @@ class PuzzleState:
         :rtype: int
         """
 
-        end = self.puzzle.goal_state.node_position(node)
+        end = self.puzzle.goal_state.positions[node]
 
         start_x, start_y = coord_map[start]
         goal_x, goal_y = coord_map[end]
@@ -458,7 +458,7 @@ class PuzzleState:
         self.h = 0
 
         # loop over the state and add up each nodes f, g, and h costs
-        for pos, node in self.state.items():
+        for pos, node in enumerate(self.state):
             self.h += self.calc(pos, node)
 
 
