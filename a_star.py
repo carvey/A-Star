@@ -268,7 +268,7 @@ class PuzzleState:
 
     parent = None
 
-    def __init__(self, *, state, puzzle):
+    def __init__(self, state=None, puzzle=None):
         """
         For sanity and clarity sake, the state and goal_state should be passed in as
         kwargs and not args
