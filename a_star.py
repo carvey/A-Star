@@ -429,9 +429,9 @@ class PuzzleState:
         Calculate the manhattan distance.
 
         Can calculate the both the g and h costs with the associated flags
-        :param int pos: Start node position
-        :param int node: Node
-        :return:
+        :param int pos: Current node position
+        :param int node: Target node
+        :return: Manhattan distance
         :rtype: int
         """
         end = self.puzzle.goal_state.node_position(node)
