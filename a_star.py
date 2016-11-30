@@ -3,12 +3,32 @@ A* Implementation of the 8 puzzle problem
 Charles Arvey
 Michael Palmer
 
+Implementation Architecture:
+...
+
+Heuristics:
+We used a combination of the Manhattan Distance and Linear Conflict for our heuristic.
+
 Requirements:
 - Python 2.7
 
+Input:
+The input file will contain the initial and goal board configuration. A sample can look like this:
+7 2 4
+5 0 6
+8 3 1
+
+0 1 2
+3 4 5
+6 7 8
+
+Output:
+If the goal configuration is reachable in a finite number of steps, all board configurations from initial to
+goal and the minimum number of steps required to reach the goal are printed out. If the goal configuration is not
+reachable in a finite number of steps, "No solution" is displayed.
+
 Usage:
 python a_star.py --file [path to input file]
-
 """
 
 # import cProfile

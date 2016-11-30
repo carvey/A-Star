@@ -29,10 +29,7 @@ class PuzzleTests(unittest.TestCase):
         self.assertEqual(state3_inversions, 28)
 
     def test_solvable(self):
-        # start1 = {0: 7, 1: 3, 2: 8, 3: 0, 4: 2, 5: 5, 6: 1, 7: 4, 8: 6}
-        # goal1 = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8}
-
-        #TODO Puzzle should probably accept some more ways to input start/goal states, or solvable could be static and take in state dicts
+        # TODO Puzzle should accept more ways to input start/goal states, or solvable be static and take in state dicts
         # start inversions: 16, goal inversions: 0
         # 16 and 0 both even, so solvable should be true
         puzzle1_string = """
@@ -76,10 +73,7 @@ class PuzzleTests(unittest.TestCase):
         """
         with self.assertRaises(UnsolvablePuzzleError):
             puzzle3 = Puzzle(puzzle3_string)
-            solvable3 = puzzle3.solvable()
-            print(Puzzle.inversions(puzzle3.start_state.state))
-            print(Puzzle.inversions(puzzle3.goal_state.state))
-            self.assertFalse(solvable3)
+            self.assertFalse(puzzle3.solvable())
 
 
 class SolveTests(unittest.TestCase):
@@ -99,7 +93,6 @@ class SolveTests(unittest.TestCase):
         solution_path = Puzzle.solution_path(solution)
         self.assertEqual(len(solution_path), 1)
 
-
     def test_solve_dynamic_goal_state(self):
         puzzle_string = """
         1 2 3
@@ -113,7 +106,6 @@ class SolveTests(unittest.TestCase):
         puzzle = Puzzle(puzzle_string)
         solution = puzzle.solve()
         solution_path = Puzzle.solution_path(solution)
-        Puzzle.print_path(solution)
         self.assertEqual(len(solution_path), 2)
 
     def test_test3_0_optimal_moves(self):
@@ -127,3 +119,45 @@ class SolveTests(unittest.TestCase):
         solution = puzzle.solve()
         solution_path = Puzzle.solution_path(solution)
         self.assertEqual(len(solution_path) - 1, 25)
+
+    def test_p4_optimal_moves(self):
+        puzzle = Puzzle('sample-problems/p4', True)
+        solution = puzzle.solve()
+        solution_path = Puzzle.solution_path(solution)
+        self.assertEqual(len(solution_path) - 1, 18)
+
+    def test_p5_optimal_moves(self):
+        puzzle = Puzzle('sample-problems/p5', True)
+        solution = puzzle.solve()
+        solution_path = Puzzle.solution_path(solution)
+        self.assertEqual(len(solution_path) - 1, 22)
+
+    def test_p6_optimal_moves(self):
+        puzzle = Puzzle('sample-problems/p6', True)
+        solution = puzzle.solve()
+        solution_path = Puzzle.solution_path(solution)
+        self.assertEqual(len(solution_path) - 1, 14)
+
+    def test_solve_easy(self):
+        puzzle = Puzzle('sample-problems/easy', True)
+        solution = puzzle.solve()
+        solution_path = Puzzle.solution_path(solution)
+        self.assertGreater(len(solution_path) - 1, 1)
+
+    def test_solve_medium(self):
+        puzzle = Puzzle('sample-problems/medium', True)
+        solution = puzzle.solve()
+        solution_path = Puzzle.solution_path(solution)
+        self.assertGreater(len(solution_path) - 1, 1)
+
+    def test_solve_hard(self):
+        puzzle = Puzzle('sample-problems/hard', True)
+        solution = puzzle.solve()
+        solution_path = Puzzle.solution_path(solution)
+        self.assertGreater(len(solution_path) - 1, 1)
+
+    def test_solve_worst(self):
+        puzzle = Puzzle('sample-problems/worst', True)
+        solution = puzzle.solve()
+        solution_path = Puzzle.solution_path(solution)
+        self.assertGreater(len(solution_path) - 1, 1)
