@@ -41,7 +41,6 @@ python a_star.py --file [path to input file]
 
 from Queue import PriorityQueue
 from argparse import ArgumentParser
-from heapq import heapify
 from time import time
 from timeit import Timer
 
@@ -213,17 +212,6 @@ class Puzzle:
                 # Add child to frontier if it's not in explored or frontier
                 if not self.state_in(child, closed_states_list) or not self.state_in(child, open_states_list):
                     open_states.put((child.f, child.h, child.g, child))
-                    open_states_list.append(child.state)
-
-                # TODO: This whole block doesn't seem to be necessary at all with a priority queue...
-                elif self.state_in(child, open_states_list) and current.f > child.f:
-                    # found better path cost, so keeping child and removing current
-                    open_states.queue.remove(current)
-                    heapify(open_states.queue)
-                    open_states.put((child.f, child.h, child.g, child))
-
-                    # Update the open states list
-                    open_states_list.remove(current.state)
                     open_states_list.append(child.state)
 
     def solvable(self):
