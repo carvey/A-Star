@@ -138,10 +138,6 @@ class Puzzle:
         :rtype: bool
         """
         return item.state in sequence
-        # for x in sequence:
-        #     if x.state == item.state:
-        #         return True
-        # return False
 
     def solve(self):
         """
