@@ -5,7 +5,9 @@ Michael Palmer
 """
 
 # import cProfile
+from Queue import PriorityQueue
 from argparse import ArgumentParser
+from heapq import heapify
 from time import time
 from timeit import Timer
 
@@ -142,21 +144,20 @@ class Puzzle:
     def solve(self):
         """
         Solve it!
+
         :return: Solution
         :rtype: PuzzleState
         """
-        open_states = set()
+        open_states = PriorityQueue()
         closed_states = set()
         open_states_list = list()
         closed_states_list = list()
 
-        open_states.add(self.start_state)
+        open_states.put((self.start_state.f, self.start_state.h, self.start_state.g, self.start_state))
         open_states_list.append(self.start_state.state)
 
         while open_states:
-            current = self.find_best_state(open_states)
-
-            open_states.remove(current)
+            current = open_states.get()[3]
             closed_states.add(current)
 
             open_states_list.remove(current.state)
@@ -175,13 +176,14 @@ class Puzzle:
 
                 # Add child to frontier if it's not in explored or frontier
                 if not self.state_in(child, closed_states_list) or not self.state_in(child, open_states_list):
-                    open_states.add(child)
+                    open_states.put((child.f, child.h, child.g, child))
                     open_states_list.append(child.state)
 
                 elif self.state_in(child, open_states_list) and current.f > child.f:
                     # found better path cost, so keeping child and removing current
-                    open_states.remove(current)
-                    open_states.add(child)
+                    open_states.queue.remove(current)
+                    heapify(open_states.queue)
+                    open_states.put((child.f, child.h, child.g, child))
 
                     open_states_list.remove(current.state)
                     open_states_list.append(child.state)
