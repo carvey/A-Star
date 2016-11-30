@@ -4,7 +4,7 @@ Charles Arvey
 Michael Palmer
 """
 
-import cProfile
+# import cProfile
 from argparse import ArgumentParser
 from time import time
 from timeit import Timer
@@ -20,10 +20,6 @@ coord_map = {
     7: (1, -2),
     8: (2, -2)
 }
-
-# define and collect user arguments
-parser = ArgumentParser("Specify a file containing a sample problem.")
-parser.add_argument("--file", type=str, required=True, help="puzzle file to parse")
 
 
 class Puzzle:
@@ -53,7 +49,7 @@ class Puzzle:
         if not solvable:
             raise AttributeError("This Puzzle is not solvable.")
 
-    def parse_file(self, file):
+    def parse_file(self, filename):
         """
         Parse the file of the format:
 
@@ -67,15 +63,15 @@ class Puzzle:
 
         Where the first puzzle state is the initial state, and the second state is the goal state
 
-        :param str file: Path to the file
+        :param str filename: Path to the file
         :return: Parsed file
         :rtype: tuple
         """
         # Open the file
-        file = open(file)
+        f = open(filename)
 
         # get the entire contents of the file
-        data = file.read()
+        data = f.read()
 
         # parse both the start and initial state
         return self.parse_full_data_string(data)
@@ -103,10 +99,7 @@ class Puzzle:
         :return: A tuple of the format (starting state dictionary, goal state dictionary)
         :rtype: tuple
         """
-        data = full_data_string.split("\n\n")
-
-        start_data = data[0]
-        goal_data = data[1]
+        start_data, goal_data = full_data_string.split("\n\n")
 
         start_map = self.parse_data(start_data)
         goal_map = self.parse_data(goal_data)
@@ -114,20 +107,21 @@ class Puzzle:
         return start_map, goal_map
 
     @staticmethod
-    def find_best_state(items):
+    def find_best_state(iterable):
         """
         Find the best state in an iterable using their f and h costs
 
-        :param list of PuzzleState items: List of states
+        :param set of PuzzleState iterable: Set of states
         :return: Best state
         :rtype: PuzzleState
         """
+        items = list(iterable)
         # print("Options: %s" % ["%d+%d=%d" % (x.g, x.h, x.f) for x in items])
 
         # Find the minimum state
         best_state = None
         for item in items:
-            if not best_state or item.f < best_state.f or (item.f == best_state.f and item.h < best_state.h) or (item.f == best_state.f and item.h == best_state.h and item.g < best_state.g):
+            if not best_state or item.f < best_state.f or (item.f == best_state.f and item.h < best_state.h):
                 best_state = item
 
         # print("Best: %s" % best_state.f)
@@ -138,7 +132,7 @@ class Puzzle:
         """
         Check if this state is in a sequence
 
-        :param item:
+        :param PuzzleState item: PuzzleState instance
         :param list of PuzzleState sequence:
         :return: Boolean
         :rtype: bool
@@ -151,46 +145,46 @@ class Puzzle:
         :return: Solution
         :rtype: PuzzleState
         """
-        open_states = list()
-        open_state_states = list()
-        closed_states = list()
-        closed_state_states = list()
-        open_states.append(self.start_state)
-        open_state_states.append(self.start_state.state)
+        open_states = set()
+        closed_states = set()
+        open_states_list = list()
+        closed_states_list = list()
 
-        # iteration = 0
+        open_states.add(self.start_state)
+        open_states_list.append(self.start_state.state)
 
         while open_states:
             current = self.find_best_state(open_states)
-            # print('Iteration: %d' % iteration)
-            # print(current.print_state())
 
             open_states.remove(current)
-            open_state_states.remove(current.state)
-            closed_states.append(current)
-            closed_state_states.append(current.state)
+            closed_states.add(current)
+
+            open_states_list.remove(current.state)
+            closed_states_list.append(current.state)
 
             if current.validate_goal_state():
-                # print('G-Cost: %d' % current.g)
                 return current
 
-            # Cost of making a move
-            g_cost = current.g + 1
-
             for child in current.actions():
-                if self.state_in(child, closed_state_states):
+                # If child is already in explored, skip to next child
+                if self.state_in(child, closed_states_list):
                     continue
 
-                if g_cost < child.g or not self.state_in(child, open_state_states):
-                    child.g = g_cost
-                    child.f = child.g + child.h
-                    child.parent = current
+                # Set the child's parent
+                child.parent = current
 
-                    if not self.state_in(child, open_state_states):
-                        open_states.append(child)
-                        open_state_states.append(child.state)
+                # Add child to frontier if it's not in explored or frontier
+                if not self.state_in(child, closed_states_list) or not self.state_in(child, open_states_list):
+                    open_states.add(child)
+                    open_states_list.append(child.state)
 
-            # iteration += 1
+                elif self.state_in(child, open_states_list) and current.f > child.f:
+                    # found better path cost, so keeping child and removing current
+                    open_states.remove(current)
+                    open_states.add(child)
+
+                    open_states_list.remove(current.state)
+                    open_states_list.append(child.state)
 
     def solvable(self):
 
@@ -216,11 +210,17 @@ class Puzzle:
             for j in range(i+1, 8):
                 if values[i] > values[j]:
                     inversions += 1
-
         return inversions
 
     @staticmethod
     def solution_path(state):
+        """
+        Trace the path back from the specified state to the start state
+
+        :param PuzzleState state: Solution state
+        :return: Solution path
+        :rtype: list of PuzzleState
+        """
         path = [state]
 
         while state.parent:
@@ -231,13 +231,19 @@ class Puzzle:
 
     @staticmethod
     def print_path(state):
+        """
+        Print the path from the start state to the specified state.
+
+        :param PuzzleState state: Puzzle state instance
+        :return: Number of moves
+        :rtype: int
+        """
         solution_path = Puzzle.solution_path(state)
 
         moves = 0
         # reversed just returns an iterator, so no lengthy operations being done on the list
         for sol in reversed(solution_path):
             print('Move #%d' % moves)
-            # print('%s + %s = %s' % (sol.g, sol.h, sol.f))
             print(sol.print_state())
             moves += 1
         return moves - 1
@@ -258,16 +264,10 @@ class Puzzle:
         print("Failure Count (iterations exceeding 5s): %s" % len(fails))
         print("Failures: %s" % fails)
 
-        # TODO (engage scope creep mode) severity of failure stat based on number of failures and how much they were over 5s would be cool
+        # TODO (engage scope creep mode) severity of failure stat based on number of failures / how much over 5s
 
 
 class PuzzleState:
-
-    g = 0
-    h = 0
-    f = 0
-
-    parent = None
 
     def __init__(self, state=None, puzzle=None):
         """
@@ -277,6 +277,16 @@ class PuzzleState:
         :param dict state: Puzzle state
         :param Puzzle puzzle: Puzzle
         """
+
+        # Initialize g, h, and f cost values
+        self.g = 0
+        self.h = 0
+        self.f = 0
+
+        # Initialize parent to a null value
+        self.parent = None
+
+        # Pass in the state dict
         self.state = state
 
         # pass a reference the puzzle's goal state in order for this instance to check for a match
@@ -291,10 +301,10 @@ class PuzzleState:
     @staticmethod
     def valid_movement_positions(position):
         """
-        'A little janky'
+        Given the position of the empty square in the puzzle, determine the squares that can make a valid move.
 
-        :param int position: Janky position
-        :return: Janky Value
+        :param int position: Position
+        :return: Valid movement positions
         :rtype: tuple
         """
         if position == 0:
@@ -326,6 +336,8 @@ class PuzzleState:
 
     def validate_goal_state(self):
         """
+        Check if the goal state has been reached
+
         :return: True if all nodes are in their proper place, False otherwise
         :rtype: bool
         """
@@ -395,11 +407,14 @@ class PuzzleState:
         node_pos = self.node_position(0)
         valid_movement_positions = PuzzleState.valid_movement_positions(node_pos)
         actions = []
+        g_cost = self.g + 1
+
         for pos, child in self.state.items():
             if pos in valid_movement_positions:
                 # Make a copy
                 copied_state = self.state.copy()
                 new_state = PuzzleState(state=copied_state, puzzle=self.puzzle)
+                new_state.g = g_cost
 
                 # Move the node in the new copy
                 new_state.move_node(child, 0)
@@ -482,8 +497,7 @@ class PuzzleState:
         manhattan = 0
         for pos, node in self.state.items():
             if node != 0:
-                self.h += self.calc(pos, node)
-            manhattan += self.calc(pos, node)
+                manhattan += self.calc(pos, node)
 
         total = manhattan + self.calc_linear_conflict()
         self.h = total
@@ -491,6 +505,9 @@ class PuzzleState:
 
 
 if __name__ == "__main__":
+    # define and collect user arguments
+    parser = ArgumentParser("Specify a file containing a sample problem.")
+    parser.add_argument("--file", type=str, required=True, help="puzzle file to parse")
     options = parser.parse_args()
 
     start_time = time()
