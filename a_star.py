@@ -17,14 +17,18 @@ Requirements:
 - Python 2.7
 
 Input:
-The input file will contain the initial and goal board configuration. A sample can look like this:
-7 2 4
-5 0 6
-8 3 1
+The input file will contain the initial and goal board configuration.
+A sample can look like this:
 
-0 1 2
-3 4 5
-6 7 8
+    7 2 4
+    5 0 6
+    8 3 1
+
+    0 1 2
+    3 4 5
+    6 7 8
+
+The first block of numbers is the start state and the second block of numbers is the goal state.
 
 Output:
 If the goal configuration is reachable in a finite number of steps, all board configurations from initial to
