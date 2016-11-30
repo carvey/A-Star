@@ -45,6 +45,7 @@ from heapq import heapify
 from time import time
 from timeit import Timer
 
+# Map tile positions to coordinates for use by Manhattan Distance
 coord_map = {
     0: (0, 0),
     1: (1, 0),
@@ -59,6 +60,7 @@ coord_map = {
 
 
 class UnsolvablePuzzleError(Exception):
+    """Thrown when a Puzzle cannot be solved in a finite number of steps."""
     pass
 
 
@@ -92,7 +94,8 @@ class Puzzle:
         if not self.solvable():
             raise UnsolvablePuzzleError("This Puzzle is not solvable.")
 
-    def parse_file(self, filename):
+    @staticmethod
+    def parse_file(filename):
         """
         Parse the file of the format:
 
@@ -117,7 +120,7 @@ class Puzzle:
         data = f.read()
 
         # parse both the start and initial state
-        return self.parse_full_data_string(data)
+        return Puzzle.parse_full_data_string(data)
 
     @staticmethod
     def parse_data(data):
@@ -138,7 +141,8 @@ class Puzzle:
 
         return state_map
 
-    def parse_full_data_string(self, full_data_string):
+    @staticmethod
+    def parse_full_data_string(full_data_string):
         """
         Parse the full data string from a file and create appropriate start and goal maps
 
@@ -149,8 +153,8 @@ class Puzzle:
         """
         start_data, goal_data = full_data_string.split("\n\n")
 
-        start_map = self.parse_data(start_data)
-        goal_map = self.parse_data(goal_data)
+        start_map = Puzzle.parse_data(start_data)
+        goal_map = Puzzle.parse_data(goal_data)
 
         return start_map, goal_map
 
@@ -178,10 +182,13 @@ class Puzzle:
         open_states_list = list()
         closed_states_list = list()
 
+        # Add the start state to the frontier
         open_states.put((self.start_state.f, self.start_state.h, self.start_state.g, self.start_state))
         open_states_list.append(self.start_state.state)
 
+        # Keep searching until the frontier is empty
         while open_states:
+
             # Pop from the priority queue and add the best state to the explored set
             current = open_states.get()[3]
             closed_states.add(current)
