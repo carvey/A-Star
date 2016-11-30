@@ -500,15 +500,12 @@ class PuzzleState:
         self.h = 0
 
         # loop over the state and add up each nodes f, g, and h costs
-        manhattan = 0
         for pos, node in self.state.items():
             if node != 0:
-                manhattan += self.calc_manhattan(pos, node)
+                self.h += self.calc_manhattan(pos, node)
 
-        total = manhattan + self.calc_linear_conflict()
-        self.h = total
+        self.h += self.calc_linear_conflict()
         self.f = self.g + self.h
-        return total
 
 
 if __name__ == "__main__":
