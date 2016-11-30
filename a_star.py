@@ -31,7 +31,6 @@ Usage:
 python a_star.py --file [path to input file]
 """
 
-# import cProfile
 from Queue import PriorityQueue
 from argparse import ArgumentParser
 from heapq import heapify
@@ -62,6 +61,7 @@ class Puzzle:
 
     def __init__(self, data, is_file=False):
         """
+        Initialize the Puzzle
 
         :param str data: Can be string 0 - 8 or file path (if file path, set flag)
         :param bool is_file: Flag to set if passing in file
@@ -80,8 +80,8 @@ class Puzzle:
         # Calculate the aggregate heuristic cost using manhattan and linear conflict
         self.start_state.calc_aggregate_costs()
 
-        solvable = self.solvable()
-        if not solvable:
+        # Check if the puzzle is not solvable
+        if not self.solvable():
             raise UnsolvablePuzzleError("This Puzzle is not solvable.")
 
     def parse_file(self, filename):
@@ -114,8 +114,10 @@ class Puzzle:
     @staticmethod
     def parse_data(data):
         """
+        Parse state data
+
         :param str data: string containing just one string state -> start state or goal state
-        :return:
+        :return: State dictionary
         :rtype: dict
         """
         pos = 0
@@ -130,10 +132,12 @@ class Puzzle:
 
     def parse_full_data_string(self, full_data_string):
         """
+        Parse the full data string from a file and create appropriate start and goal maps
+
         :param str full_data_string: a string containing the start state and goal state,
                                         delimited with two newline chars
         :return: A tuple of the format (starting state dictionary, goal state dictionary)
-        :rtype: tuple
+        :rtype: tuple of dict
         """
         start_data, goal_data = full_data_string.split("\n\n")
 
@@ -208,6 +212,12 @@ class Puzzle:
                     open_states_list.append(child.state)
 
     def solvable(self):
+        """
+        Determine if this puzzle is solvable
+
+        :return: True if the puzzle is solvable, otherwise False
+        :rtype: bool
+        """
 
         start_inversions = Puzzle.inversions(self.start_state.state)
         goal_inversions = Puzzle.inversions(self.goal_state.state)
@@ -270,6 +280,11 @@ class Puzzle:
         return moves - 1
 
     def run_stats(self, run_times=5):
+        """
+        Run statistics
+
+        :param int run_times: Number of times to run
+        """
         timer = Timer(stmt=self.solve)
         times = timer.repeat(run_times, 1)
         avg = sum(times) / len(times)
@@ -285,18 +300,15 @@ class Puzzle:
         print("Failure Count (iterations exceeding 5s): %s" % len(fails))
         print("Failures: %s" % fails)
 
-        # TODO (engage scope creep mode) severity of failure stat based on number of failures / how much over 5s
-
 
 class PuzzleState:
 
     def __init__(self, state=None, puzzle=None):
         """
-        For sanity and clarity sake, the state and goal_state should be passed in as
-        kwargs and not args
+        Initialize a puzzle state
 
-        :param dict state: Puzzle state
-        :param Puzzle puzzle: Puzzle
+        :param dict state: Puzzle state dictionary
+        :param Puzzle puzzle: Puzzle instance
         """
 
         # Initialize g, h, and f cost values
@@ -314,9 +326,21 @@ class PuzzleState:
         self.puzzle = puzzle
 
     def __str__(self):
+        """
+        Return string representation of the puzzle state
+
+        :return: Puzzle State as a string
+        :rtype: str
+        """
         return self.print_state()
 
     def __repr__(self):
+        """
+        Generate puzzle state representation
+
+        :return: Puzzle State representation
+        :rtype: str
+        """
         return self.print_state()
 
     @staticmethod
@@ -326,7 +350,7 @@ class PuzzleState:
 
         :param int position: Position
         :return: Valid movement positions
-        :rtype: tuple
+        :rtype: tuple of int
         """
         if position == 0:
             return 1, 3
@@ -364,23 +388,19 @@ class PuzzleState:
         """
         return self.state == self.puzzle.goal_state.state
 
-    def move_node(self, moving_node, empty_node):
+    def move_node(self, moving_node):
         """
         Switches a real node with the node holding the val 0
-        :param int moving_node: The node that is being moved into the "empty" space, which is just a node with val 0
-        :param int empty_node:
-        :rtype: None
-        """
-        if empty_node != 0:
-            raise Exception("Can't move to a position that does not contain the 0 value")
 
+        :param int moving_node: The node that is being moved into the "empty" space, which is just a node with val 0
+        """
         # create dummy vars to hold the positions of each node while we switch
         moving_pos = self.node_position(moving_node)
-        empty_pos = self.node_position(empty_node)
+        empty_pos = self.node_position(0)
 
         # switch the nodes in the puzzle states dict
         self.state[empty_pos] = moving_node
-        self.state[moving_pos] = empty_node
+        self.state[moving_pos] = 0
 
         self.calc_aggregate_costs()
 
@@ -438,7 +458,7 @@ class PuzzleState:
                 new_state.g = g_cost
 
                 # Move the node in the new copy
-                new_state.move_node(child, 0)
+                new_state.move_node(child)
 
                 # Add to actions
                 actions.append(new_state)
@@ -550,9 +570,9 @@ if __name__ == "__main__":
         print("Total Time elapsed: %s seconds" % total_run_time)
 
         print("---------")
+
+        # Comment these out as necessary
+        # puzzle.run_stats(25)
+
     except UnsolvablePuzzleError:
         print('No solution - this puzzle is not solvable in a finite number of steps')
-
-    # Comment these out as necessary
-    # puzzle.run_stats(25)
-    # cProfile.run("puzzle.solve()", sort="tottime")

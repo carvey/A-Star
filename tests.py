@@ -120,6 +120,12 @@ class SolveTests(unittest.TestCase):
         solution_path = Puzzle.solution_path(solution)
         self.assertEqual(len(solution_path) - 1, 25)
 
+    def test_test3_6_optimal_moves(self):
+        puzzle = Puzzle('sample-problems/test3_6', True)
+        solution = puzzle.solve()
+        solution_path = Puzzle.solution_path(solution)
+        self.assertEqual(len(solution_path) - 1, 11)
+
     def test_p4_optimal_moves(self):
         puzzle = Puzzle('sample-problems/p4', True)
         solution = puzzle.solve()
