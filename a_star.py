@@ -2,6 +2,10 @@
 A* Implementation of the 8 puzzle problem
 Charles Arvey
 Michael Palmer
+
+Requirements:
+- Python 2.7
+
 """
 
 # import cProfile
