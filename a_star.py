@@ -41,8 +41,6 @@ python a_star.py --file [path to input file]
 
 from Queue import PriorityQueue
 from argparse import ArgumentParser
-from time import time
-from timeit import Timer
 
 # Map tile positions to coordinates for use by Manhattan Distance
 coord_map = {
@@ -281,27 +279,6 @@ class Puzzle:
             print(sol.print_state())
             moves += 1
         return moves - 1
-
-    def run_stats(self, run_times=5):
-        """
-        Run statistics
-
-        :param int run_times: Number of times to run
-        """
-        timer = Timer(stmt=self.solve)
-        times = timer.repeat(run_times, 1)
-        avg = sum(times) / len(times)
-        fails = [fail for fail in times if fail > 5]
-        min_time = min(times)
-        max_time = max(times)
-        success_rate = 100 - (len(fails) / run_times * 100)
-
-        print("Avg time over %s iterations: %s" % (run_times, avg))
-        print("Minimum time: %s" % min_time)
-        print("Maximum time: %s" % max_time)
-        print("Success Rate: %s%%" % success_rate)
-        print("Failure Count (iterations exceeding 5s): %s" % len(fails))
-        print("Failures: %s" % fails)
 
 
 class PuzzleState:
@@ -559,23 +536,10 @@ if __name__ == "__main__":
     options = parser.parse_args()
 
     try:
-        start_time = time()
         puzzle = Puzzle(options.file, True)
         solution = puzzle.solve()
-
-        print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
         optimal_moves = Puzzle.print_path(solution)
-
         print('Optimal Moves: %d' % optimal_moves)
-
-        end_time = time()
-        total_run_time = end_time - start_time
-        print("Total Time elapsed: %s seconds" % total_run_time)
-
-        print("---------")
-
-        # Comment these out as necessary
-        # puzzle.run_stats(25)
 
     except UnsolvablePuzzleError:
         print('No solution - this puzzle is not solvable in a finite number of steps')
