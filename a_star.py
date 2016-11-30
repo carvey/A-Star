@@ -401,7 +401,7 @@ class PuzzleState:
         for pos, child in enumerate(self.state):
             if pos in valid_movement_positions:
                 # Make a copy
-                copied_state = self.state.copy()
+                copied_state = self.state[:]
                 new_state = PuzzleState(state=copied_state, puzzle=self.puzzle)
                 new_state.g = g_cost
 
