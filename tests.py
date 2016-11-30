@@ -1,5 +1,5 @@
 import unittest
-from a_star import Puzzle
+from a_star import Puzzle, UnsolvablePuzzleError
 
 
 class PuzzleTests(unittest.TestCase):
@@ -74,7 +74,7 @@ class PuzzleTests(unittest.TestCase):
         0 2 5
         4 1 6
         """
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(UnsolvablePuzzleError):
             puzzle3 = Puzzle(puzzle3_string)
             solvable3 = puzzle3.solvable()
             print(Puzzle.inversions(puzzle3.start_state.state))

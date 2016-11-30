@@ -6,6 +6,9 @@ Michael Palmer
 Requirements:
 - Python 2.7
 
+Usage:
+python a_star.py --file [path to input file]
+
 """
 
 # import cProfile
@@ -26,6 +29,10 @@ coord_map = {
     7: (1, -2),
     8: (2, -2)
 }
+
+
+class UnsolvablePuzzleError(Exception):
+    pass
 
 
 class Puzzle:
@@ -53,7 +60,7 @@ class Puzzle:
 
         solvable = self.solvable()
         if not solvable:
-            raise AttributeError("This Puzzle is not solvable.")
+            raise UnsolvablePuzzleError("This Puzzle is not solvable.")
 
     def parse_file(self, filename):
         """
@@ -505,20 +512,23 @@ if __name__ == "__main__":
     parser.add_argument("--file", type=str, required=True, help="puzzle file to parse")
     options = parser.parse_args()
 
-    start_time = time()
-    puzzle = Puzzle(options.file, True)
-    solution = puzzle.solve()
+    try:
+        start_time = time()
+        puzzle = Puzzle(options.file, True)
+        solution = puzzle.solve()
 
-    print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
-    optimal_moves = Puzzle.print_path(solution)
+        print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
+        optimal_moves = Puzzle.print_path(solution)
 
-    print('Optimal Moves: %d' % optimal_moves)
+        print('Optimal Moves: %d' % optimal_moves)
 
-    end_time = time()
-    total_run_time = end_time - start_time
-    print("Total Time elapsed: %s seconds" % total_run_time)
+        end_time = time()
+        total_run_time = end_time - start_time
+        print("Total Time elapsed: %s seconds" % total_run_time)
 
-    print("---------")
+        print("---------")
+    except UnsolvablePuzzleError:
+        print('No solution - this puzzle is not solvable in a finite number of steps')
 
     # Comment these out as necessary
     # puzzle.run_stats(25)
