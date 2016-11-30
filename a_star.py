@@ -424,9 +424,9 @@ class PuzzleState:
 
         return actions
 
-    def calc(self, pos, node):
+    def calc_manhattan(self, pos, node):
         """
-        Heuristic will be the manhattan distance
+        Calculate the manhattan distance.
 
         Can calculate the both the g and h costs with the associated flags
         :param int pos: Start node position
@@ -444,12 +444,16 @@ class PuzzleState:
 
     def calc_linear_conflict(self):
         """
-        Linear Conflict Tiles Definition: Two tiles tj and tk are in a linear conflict if tj and tk are in the same
-        line, the goal positions of tj and tk are both in that line, tj is to the right of tk and goal position of
-        tj is to the left of the goal position of tk.
-        :param start:
-        :param node:
-        :return:
+        Calculate the linear conflict of this state
+
+        Two tiles tj and tk are in a linear conflict if:
+         - tj and tk are in the same line
+         - goal positions of tj and tk are both in that line
+         - tj is to the right of tk
+         - goal position of tj is to the left of the goal position of tk
+
+        :return: Linear conflict
+        :rtype: int
         """
         linear_vertical_conflict = 0
         linear_horizontal_conflict = 0
@@ -497,7 +501,7 @@ class PuzzleState:
         manhattan = 0
         for pos, node in self.state.items():
             if node != 0:
-                manhattan += self.calc(pos, node)
+                manhattan += self.calc_manhattan(pos, node)
 
         total = manhattan + self.calc_linear_conflict()
         self.h = total
