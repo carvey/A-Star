@@ -4,7 +4,7 @@ Charles Arvey
 Michael Palmer
 """
 
-import cProfile
+# import cProfile
 from argparse import ArgumentParser
 from time import time
 from timeit import Timer
@@ -20,10 +20,6 @@ coord_map = {
     7: (1, -2),
     8: (2, -2)
 }
-
-# define and collect user arguments
-parser = ArgumentParser("Specify a file containing a sample problem.")
-parser.add_argument("--file", type=str, required=True, help="puzzle file to parse")
 
 
 class Puzzle:
@@ -161,7 +157,6 @@ class Puzzle:
 
         while open_states:
             current = self.find_best_state(open_states)
-            # print(current.print_state())
 
             open_states.remove(current)
             closed_states.add(current)
@@ -210,11 +205,17 @@ class Puzzle:
             for j in range(i+1, 8):
                 if values[i] > values[j]:
                     inversions += 1
-
         return inversions
 
     @staticmethod
     def solution_path(state):
+        """
+        Trace the path back from the specified state to the start state
+
+        :param PuzzleState state: Solution state
+        :return: Solution path
+        :rtype: list of PuzzleState
+        """
         path = [state]
 
         while state.parent:
@@ -229,7 +230,8 @@ class Puzzle:
         Print the path from the start state to the specified state.
 
         :param PuzzleState state: Puzzle state instance
-        :return:
+        :return: Number of moves
+        :rtype: int
         """
         solution_path = Puzzle.solution_path(state)
 
@@ -456,6 +458,9 @@ class PuzzleState:
 
 
 if __name__ == "__main__":
+    # define and collect user arguments
+    parser = ArgumentParser("Specify a file containing a sample problem.")
+    parser.add_argument("--file", type=str, required=True, help="puzzle file to parse")
     options = parser.parse_args()
 
     start_time = time()
@@ -472,27 +477,6 @@ if __name__ == "__main__":
     print("Total Time elapsed: %s" % total_run_time)
 
     print("---------")
-
-    # Keep trying to solve until the optimal solution is found.
-    # EXPECTED_MOVES = 28
-    # puzzle_moves = 0
-    # attempt = 1
-    #
-    # while puzzle_moves != EXPECTED_MOVES:
-    #     print('Attempt #%d' % attempt)
-    #     start_time = time()
-    #     puzzle = Puzzle(options.file, True)
-    #     solution = puzzle.solve()
-    #
-    #     print('Solution found in %s seconds, tracing back path to start node...' % (time() - start_time))
-    #     puzzle_moves = Puzzle.print_path(solution)
-    #
-    #     end_time = time()
-    #     total_run_time = end_time - start_time
-    #     print("Total Time elapsed: %s" % total_run_time)
-    #
-    #     print("---------" * 5)
-    #     attempt += 1
 
     # Comment these out as necessary
     # puzzle.run_stats(25)
