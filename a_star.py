@@ -128,7 +128,7 @@ class Puzzle:
         # Find the minimum state
         best_state = None
         for item in items:
-            if not best_state or item.f < best_state.f or (item.f == best_state.f and item.h < best_state.h) or (item.f == best_state.f and item.h == best_state.h and item.g < best_state.g):
+            if not best_state or item.f < best_state.f or (item.f == best_state.f and item.h < best_state.h):
                 best_state = item
 
         # print("Best: %s" % best_state.f)
@@ -159,8 +159,6 @@ class Puzzle:
         closed_states = set()
         open_states.add(self.start_state)
 
-        # iteration = 0
-
         while open_states:
             current = self.find_best_state(open_states)
             # print('Iteration: %d' % iteration)
@@ -180,15 +178,31 @@ class Puzzle:
                 if self.state_in(child, closed_states):
                     continue
 
-                if g_cost < child.g or not self.state_in(child, open_states):
-                    child.g = g_cost
-                    child.f = child.g + child.h
-                    child.parent = current
+                child.parent = current
 
-                    if not self.state_in(child, open_states):
+                child.g = g_cost
+                child.f = child.g + child.h
+
+                if not self.state_in(child, closed_states) or not self.state_in(child, open_states):
+                    open_states.add(child)
+
+                elif self.state_in(child, open_states):
+                    if child.f > current.f:
+                        continue
+                        # keep current, get rid of child
+                    elif current.f > child.f: # keep child, get rid of current
+                        open_states.pop(current)
                         open_states.add(child)
 
-            # iteration += 1
+
+                #
+                # if self.state_in(child, open_states):
+                #
+                #     child.parent = current
+
+                # if not self.state_in(child, open_states):
+                #     open_states.add(child)
+
 
     def solvable(self):
 
