@@ -501,6 +501,7 @@ class PuzzleState:
 
         total = manhattan + self.calc_linear_conflict()
         self.h = total
+        self.f = self.g + self.h
         return total
 
 
