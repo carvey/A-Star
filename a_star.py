@@ -516,7 +516,7 @@ if __name__ == "__main__":
 
     end_time = time()
     total_run_time = end_time - start_time
-    print("Total Time elapsed: %s" % total_run_time)
+    print("Total Time elapsed: %s seconds" % total_run_time)
 
     print("---------")
 
