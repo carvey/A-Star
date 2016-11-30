@@ -413,25 +413,73 @@ class PuzzleState:
 
         return actions
 
-    def calc(self, start, node):
+    def calc_manhattan(self, pos, node):
         """
-        Heuristic will be the manhattan distance
+        Calculate the manhattan distance.
 
         Can calculate the both the g and h costs with the associated flags
-        :param int start: Start node position
-        :param int node: Node
-        :return:
+        :param int pos: Current node position
+        :param int node: Target node
+        :return: Manhattan distance
         :rtype: int
         """
-
         end = self.puzzle.goal_state.positions[node]
-
-        start_x, start_y = coord_map[start]
+        current_x, current_y = coord_map[pos]
         goal_x, goal_y = coord_map[end]
 
-        dst = abs(start_x - goal_x) + abs(start_y - goal_y)
+        dst = abs(current_x - goal_x) + abs(current_y - goal_y)
 
         return dst
+
+    def calc_linear_conflict(self):
+        """
+        Calculate the linear conflict of this state
+
+        Two tiles tj and tk are in a linear conflict if:
+         - tj and tk are in the same line
+         - goal positions of tj and tk are both in that line
+         - tj is to the right of tk
+         - goal position of tj is to the left of the goal position of tk
+
+        :return: Linear conflict
+        :rtype: int
+        """
+        linear_vertical_conflict = 0
+        linear_horizontal_conflict = 0
+
+        rows = [
+            [self.state[0], self.state[1], self.state[2]],
+            [self.state[3], self.state[4], self.state[5]],
+            [self.state[6], self.state[7], self.state[8]]
+        ]
+
+        # Calculate vertical conflicts
+        for row, row_list in enumerate(rows):
+            maximum = -1
+            for col, value in enumerate(row_list):
+                if value != 0 and (value - 1) / 3 == row:
+                    if value > maximum:
+                        maximum = value
+                    else:
+                        linear_vertical_conflict += 2
+
+        cols = [
+            [self.state[0], self.state[3], self.state[6]],
+            [self.state[1], self.state[4], self.state[7]],
+            [self.state[2], self.state[5], self.state[8]]
+        ]
+
+        # Calculate horizontal conflicts
+        for col, col_list in enumerate(cols):
+            maximum = -1
+            for row, value in enumerate(col_list):
+                if value != 0 and value % 3 == col + 1:
+                    if value > maximum:
+                        maximum = value
+                    else:
+                        linear_horizontal_conflict += 2
+
+        return linear_vertical_conflict + linear_horizontal_conflict
 
     def calc_aggregate_costs(self):
         """
@@ -443,8 +491,9 @@ class PuzzleState:
         # loop over the state and add up each nodes f, g, and h costs
         for pos, node in enumerate(self.state):
             if node != 0:
-                self.h += self.calc(pos, node)
+                self.h += self.calc_manhattan(pos, node)
 
+        self.h += self.calc_linear_conflict()
         self.f = self.g + self.h
 
 
