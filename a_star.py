@@ -40,22 +40,24 @@ class Puzzle:
     To represent one puzzle instance based on a sample file
     """
 
-    def __init__(self, data, file=False):
+    def __init__(self, data, is_file=False):
         """
 
-        :param data: Can be string 0 - 8 or file path (if file path, set flag)
-        :param file: Flag to set if passing in file
-        :return:
+        :param str data: Can be string 0 - 8 or file path (if file path, set flag)
+        :param bool is_file: Flag to set if passing in file
+        :raises: UnsolvablePuzzleError
         """
-        if file:  # the data being passed in is a file to be parsed
+        if is_file:  # the data being passed in is a file to be parsed
             start_state, goal_state = self.parse_file(data)
 
         else:  # the data being passed in is a string containing a start and goal state
             start_state, goal_state = self.parse_full_data_string(data)
 
+        # Initialize start and goal states
         self.start_state = PuzzleState(state=start_state, puzzle=self)
         self.goal_state = PuzzleState(state=goal_state, puzzle=self)
 
+        # Calculate the aggregate heuristic cost using manhattan and linear conflict
         self.start_state.calc_aggregate_costs()
 
         solvable = self.solvable()
@@ -89,7 +91,8 @@ class Puzzle:
         # parse both the start and initial state
         return self.parse_full_data_string(data)
 
-    def parse_data(self, data):
+    @staticmethod
+    def parse_data(data):
         """
         :param str data: string containing just one string state -> start state or goal state
         :return:
