@@ -49,7 +49,7 @@ class Puzzle:
         if not solvable:
             raise AttributeError("This Puzzle is not solvable.")
 
-    def parse_file(self, file):
+    def parse_file(self, filename):
         """
         Parse the file of the format:
 
@@ -63,15 +63,15 @@ class Puzzle:
 
         Where the first puzzle state is the initial state, and the second state is the goal state
 
-        :param str file: Path to the file
+        :param str filename: Path to the file
         :return: Parsed file
         :rtype: tuple
         """
         # Open the file
-        file = open(file)
+        f = open(filename)
 
         # get the entire contents of the file
-        data = file.read()
+        data = f.read()
 
         # parse both the start and initial state
         return self.parse_full_data_string(data)
@@ -99,10 +99,7 @@ class Puzzle:
         :return: A tuple of the format (starting state dictionary, goal state dictionary)
         :rtype: tuple
         """
-        data = full_data_string.split("\n\n")
-
-        start_data = data[0]
-        goal_data = data[1]
+        start_data, goal_data = full_data_string.split("\n\n")
 
         start_map = self.parse_data(start_data)
         goal_map = self.parse_data(goal_data)
@@ -259,7 +256,7 @@ class Puzzle:
         print("Failure Count (iterations exceeding 5s): %s" % len(fails))
         print("Failures: %s" % fails)
 
-        # TODO (engage scope creep mode) severity of failure stat based on number of failures and how much they were over 5s would be cool
+        # TODO (engage scope creep mode) severity of failure stat based on number of failures / how much over 5s
 
 
 class PuzzleState:
