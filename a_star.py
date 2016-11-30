@@ -161,48 +161,30 @@ class Puzzle:
 
         while open_states:
             current = self.find_best_state(open_states)
-            # print('Iteration: %d' % iteration)
             # print(current.print_state())
 
             open_states.remove(current)
             closed_states.add(current)
 
             if current.validate_goal_state():
-                print('G-Cost: %d' % current.g)
                 return current
 
-            # Cost of making a move
-            g_cost = current.g + 1
-
             for child in current.actions():
+                # If child is already in explored, skip to next child
                 if self.state_in(child, closed_states):
                     continue
 
+                # Set the child's parent
                 child.parent = current
 
-                child.g = g_cost
-                child.f = child.g + child.h
-
+                # Add child to frontier if it's not in explored or frontier
                 if not self.state_in(child, closed_states) or not self.state_in(child, open_states):
                     open_states.add(child)
 
-                elif self.state_in(child, open_states):
-                    if child.f > current.f:
-                        continue
-                        # keep current, get rid of child
-                    elif current.f > child.f: # keep child, get rid of current
-                        open_states.pop(current)
-                        open_states.add(child)
-
-
-                #
-                # if self.state_in(child, open_states):
-                #
-                #     child.parent = current
-
-                # if not self.state_in(child, open_states):
-                #     open_states.add(child)
-
+                elif self.state_in(child, open_states) and current.f > child.f:
+                    # found better path cost, so keeping child and removing current
+                    open_states.remove(current)
+                    open_states.add(child)
 
     def solvable(self):
 
@@ -243,13 +225,18 @@ class Puzzle:
 
     @staticmethod
     def print_path(state):
+        """
+        Print the path from the start state to the specified state.
+
+        :param PuzzleState state: Puzzle state instance
+        :return:
+        """
         solution_path = Puzzle.solution_path(state)
 
         moves = 0
         # reversed just returns an iterator, so no lengthy operations being done on the list
         for sol in reversed(solution_path):
             print('Move #%d' % moves)
-            # print('%s + %s = %s' % (sol.g, sol.h, sol.f))
             print(sol.print_state())
             moves += 1
         return moves - 1
@@ -275,13 +262,7 @@ class Puzzle:
 
 class PuzzleState:
 
-    g = 0
-    h = 0
-    f = 0
-
-    parent = None
-
-    def __init__(self, *, state, puzzle):
+    def __init__(self, state=None, puzzle=None):
         """
         For sanity and clarity sake, the state and goal_state should be passed in as
         kwargs and not args
@@ -290,8 +271,16 @@ class PuzzleState:
         :param Puzzle puzzle: Puzzle
         """
 
+        # Initialize g, h, and f cost values
+        self.g = 0
+        self.h = 0
+        self.f = 0
+
+        # Initialize parent to a null value
+        self.parent = None
+
+        # Pass in the state dict
         self.state = state
-        # self.positions = {v: k for k, v in state.items()}
 
         # pass a reference the puzzle's goal state in order for this instance to check for a match
         self.puzzle = puzzle
@@ -305,10 +294,10 @@ class PuzzleState:
     @staticmethod
     def valid_movement_positions(position):
         """
-        'A little janky'
+        Given the position of the empty square in the puzzle, determine the squares that can make a valid move.
 
-        :param int position: Janky position
-        :return: Janky Value
+        :param int position: Position
+        :return: Valid movement positions
         :rtype: tuple
         """
         if position == 0:
@@ -340,6 +329,8 @@ class PuzzleState:
 
     def validate_goal_state(self):
         """
+        Check if the goal state has been reached
+
         :return: True if all nodes are in their proper place, False otherwise
         :rtype: bool
         """
@@ -412,11 +403,14 @@ class PuzzleState:
         node_pos = self.node_position(0)
         valid_movement_positions = PuzzleState.valid_movement_positions(node_pos)
         actions = []
+        g_cost = self.g + 1
+
         for pos, child in self.state.items():
             if pos in valid_movement_positions:
                 # Make a copy
                 copied_state = self.state.copy()
                 new_state = PuzzleState(state=copied_state, puzzle=self.puzzle)
+                new_state.g = g_cost
 
                 # Move the node in the new copy
                 new_state.move_node(child, 0)
