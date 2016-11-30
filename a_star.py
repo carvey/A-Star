@@ -162,6 +162,7 @@ class Puzzle:
                     open_states.put((child.f, child.h, child.g, child))
                     open_states_list.append(child.state)
 
+                # TODO: This whole block doesn't seem to be necessary at all with a priority queue...
                 elif self.state_in(child, open_states_list) and current.f > child.f:
                     # found better path cost, so keeping child and removing current
                     open_states.queue.remove(current)
