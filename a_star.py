@@ -7,7 +7,7 @@ Implementation Architecture:
 When the implementation is run, a Puzzle instance is created. This instance will initialize the puzzle's start and
 goal states based on the input file. A* search is used to find the best path from the start state to the goal state.
 For each possible action (move), a PuzzleState instance is created to represent the current state of the puzzle.
-Dictionaries are used in our PuzzleState class to track states and map the values of the puzzle board to their
+Dictionaries are used in our PuzzleState class to tr    ack states and map the values of the puzzle board to their
 respective positions.
 
 Heuristics:
@@ -155,18 +155,6 @@ class Puzzle:
 
         return start_map, goal_map
 
-    @staticmethod
-    def state_in(item, sequence):
-        """
-        Check if this state is in a sequence
-
-        :param PuzzleState item: PuzzleState instance
-        :param list of PuzzleState sequence:
-        :return: Boolean
-        :rtype: bool
-        """
-        return item.state in sequence
-
     def solve(self):
         """
         Solve it!
@@ -201,14 +189,14 @@ class Puzzle:
             # Loop through the possible actions from this state
             for child in current.actions():
                 # If child is already in explored, skip to next child
-                if self.state_in(child, closed_states_list):
+                if child.state in closed_states_list:
                     continue
 
                 # Set the child's parent
                 child.parent = current
 
                 # Add child to frontier if it's not in explored or frontier
-                if not self.state_in(child, closed_states_list) or not self.state_in(child, open_states_list):
+                if child.state not in closed_states_list or child.state not in open_states_list:
                     open_states.put((child.f, child.h, child.g, child))
                     open_states_list.append(child.state)
 
