@@ -132,15 +132,16 @@ class Puzzle:
         """
         Check if this state is in a sequence
 
-        :param item:
-        :param set of PuzzleState sequence:
+        :param PuzzleState item: PuzzleState instance
+        :param list of PuzzleState sequence:
         :return: Boolean
         :rtype: bool
         """
-        for x in sequence:
-            if x.state == item.state:
-                return True
-        return False
+        return item.state in sequence
+        # for x in sequence:
+        #     if x.state == item.state:
+        #         return True
+        # return False
 
     def solve(self):
         """
@@ -150,7 +151,11 @@ class Puzzle:
         """
         open_states = set()
         closed_states = set()
+        open_states_list = list()
+        closed_states_list = list()
+
         open_states.add(self.start_state)
+        open_states_list.append(self.start_state.state)
 
         while open_states:
             current = self.find_best_state(open_states)
@@ -158,25 +163,32 @@ class Puzzle:
             open_states.remove(current)
             closed_states.add(current)
 
+            open_states_list.remove(current.state)
+            closed_states_list.append(current.state)
+
             if current.validate_goal_state():
                 return current
 
             for child in current.actions():
                 # If child is already in explored, skip to next child
-                if self.state_in(child, closed_states):
+                if self.state_in(child, closed_states_list):
                     continue
 
                 # Set the child's parent
                 child.parent = current
 
                 # Add child to frontier if it's not in explored or frontier
-                if not self.state_in(child, closed_states) or not self.state_in(child, open_states):
+                if not self.state_in(child, closed_states_list) or not self.state_in(child, open_states_list):
                     open_states.add(child)
+                    open_states_list.append(child.state)
 
-                elif self.state_in(child, open_states) and current.f > child.f:
+                elif self.state_in(child, open_states_list) and current.f > child.f:
                     # found better path cost, so keeping child and removing current
                     open_states.remove(current)
                     open_states.add(child)
+
+                    open_states_list.remove(current.state)
+                    open_states_list.append(child.state)
 
     def solvable(self):
 
