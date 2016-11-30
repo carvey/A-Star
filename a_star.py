@@ -464,6 +464,7 @@ class PuzzleState:
             [self.state[6], self.state[7], self.state[8]]
         ]
 
+        # Calculate vertical conflicts
         for row, row_list in enumerate(rows):
             maximum = -1
             for col, value in enumerate(row_list):
@@ -471,7 +472,7 @@ class PuzzleState:
                     if value > maximum:
                         maximum = value
                     else:
-                        linear_horizontal_conflict += 2
+                        linear_vertical_conflict += 2
 
         cols = [
             [self.state[0], self.state[3], self.state[6]],
@@ -479,6 +480,7 @@ class PuzzleState:
             [self.state[2], self.state[5], self.state[8]]
         ]
 
+        # Calculate horizontal conflicts
         for col, col_list in enumerate(cols):
             maximum = -1
             for row, value in enumerate(col_list):
