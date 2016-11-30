@@ -7,7 +7,7 @@ Implementation Architecture:
 When the implementation is run, a Puzzle instance is created. This instance will initialize the puzzle's start and
 goal states based on the input file. A* search is used to find the best path from the start state to the goal state.
 For each possible action (move), a PuzzleState instance is created to represent the current state of the puzzle.
-Dictionaries are used in our PuzzleState class to tr    ack states and map the values of the puzzle board to their
+Dictionaries are used in our PuzzleState class to track states and map the values of the puzzle board to their
 respective positions.
 
 Heuristics:
