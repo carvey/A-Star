@@ -5,7 +5,9 @@ Michael Palmer
 """
 
 # import cProfile
+from Queue import PriorityQueue
 from argparse import ArgumentParser
+from heapq import heapify
 from time import time
 from timeit import Timer
 
@@ -107,27 +109,6 @@ class Puzzle:
         return start_map, goal_map
 
     @staticmethod
-    def find_best_state(iterable):
-        """
-        Find the best state in an iterable using their f and h costs
-
-        :param set of PuzzleState iterable: Set of states
-        :return: Best state
-        :rtype: PuzzleState
-        """
-        items = list(iterable)
-        # print("Options: %s" % ["%d+%d=%d" % (x.g, x.h, x.f) for x in items])
-
-        # Find the minimum state
-        best_state = None
-        for item in items:
-            if not best_state or item.f < best_state.f or (item.f == best_state.f and item.h < best_state.h):
-                best_state = item
-
-        # print("Best: %s" % best_state.f)
-        return best_state
-
-    @staticmethod
     def state_in(item, sequence):
         """
         Check if this state is in a sequence
@@ -142,29 +123,32 @@ class Puzzle:
     def solve(self):
         """
         Solve it!
+
         :return: Solution
         :rtype: PuzzleState
         """
-        open_states = set()
+        open_states = PriorityQueue()
         closed_states = set()
         open_states_list = list()
         closed_states_list = list()
 
-        open_states.add(self.start_state)
+        open_states.put((self.start_state.f, self.start_state.h, self.start_state.g, self.start_state))
         open_states_list.append(self.start_state.state)
 
         while open_states:
-            current = self.find_best_state(open_states)
-
-            open_states.remove(current)
+            # Pop from the priority queue and add the best state to the explored set
+            current = open_states.get()[3]
             closed_states.add(current)
 
+            # Update the actual states (dicts) that are in open/closed (this makes the search faster)
             open_states_list.remove(current.state)
             closed_states_list.append(current.state)
 
+            # Have we reached the goal state?
             if current.validate_goal_state():
                 return current
 
+            # Loop through the possible actions from this state
             for child in current.actions():
                 # If child is already in explored, skip to next child
                 if self.state_in(child, closed_states_list):
@@ -175,14 +159,17 @@ class Puzzle:
 
                 # Add child to frontier if it's not in explored or frontier
                 if not self.state_in(child, closed_states_list) or not self.state_in(child, open_states_list):
-                    open_states.add(child)
+                    open_states.put((child.f, child.h, child.g, child))
                     open_states_list.append(child.state)
 
+                # TODO: This whole block doesn't seem to be necessary at all with a priority queue...
                 elif self.state_in(child, open_states_list) and current.f > child.f:
                     # found better path cost, so keeping child and removing current
-                    open_states.remove(current)
-                    open_states.add(child)
+                    open_states.queue.remove(current)
+                    heapify(open_states.queue)
+                    open_states.put((child.f, child.h, child.g, child))
 
+                    # Update the open states list
                     open_states_list.remove(current.state)
                     open_states_list.append(child.state)
 
